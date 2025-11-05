@@ -1,13 +1,9 @@
-import React, { useState } from 'react'
+import React from 'react'
 
 const Login: React.FC = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Aquí iría la lógica de autenticación
-        console.log('Login:', { username, password });
     };
 
     return (
