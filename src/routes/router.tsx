@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import Login from "../pages/login/Login";
 import Profile from "../pages/profile/Profile";
+import Chat from "../pages/chat/Chat";
 
 export const routes = [
     {
@@ -14,6 +15,10 @@ export const routes = [
     {
         path: "/profile",
         element: <Profile />,
+    },
+    {
+        path: "/chat",
+        element: <Chat />,
     }
 ]
 
