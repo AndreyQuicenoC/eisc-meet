@@ -22,7 +22,7 @@ const Profile: React.FC = () => {
   return (
     <div className="profile-page">
       <Navbar onLogout={handleLogout} />
-      
+
       <div className="profile-card">
         <div className="profile-content">
           <h1>Bienvenido</h1>
