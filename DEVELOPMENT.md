@@ -3,6 +3,7 @@
 ## 🎨 Diseño
 
 El proyecto sigue el diseño de CHARLATON con:
+
 - **Header**: Logo CHARLATON, navegación (Inicio, Producto, Sobre nosotros), y botones de sesión
 - **Footer**: Mapa del sitio completo con secciones de Navegación, Cuenta, Ayuda y Legal
 - **Colores**: Esquema de colores cyan/azul para mantener coherencia visual
@@ -33,7 +34,9 @@ src/
 ## 🚀 Ramas
 
 ### `develop-auth`
+
 Contiene el diseño del login siguiendo el estilo de CHARLATON:
+
 - ✅ Login con Google OAuth
 - ✅ Header con navegación
 - ✅ Footer completo con mapa del sitio
@@ -41,7 +44,9 @@ Contiene el diseño del login siguiendo el estilo de CHARLATON:
 - ✅ Diseño responsive y moderno
 
 ### `develop-websockets`
+
 Contiene la implementación del chat global:
+
 - ✅ Chat en tiempo real con Socket.IO
 - ✅ Interfaz de chat moderna y cómoda
 - ✅ Protección de ruta (solo usuarios autenticados)
@@ -53,6 +58,7 @@ Contiene la implementación del chat global:
 ## 🔧 Configuración
 
 ### Variables de Entorno (.env)
+
 ```
 VITE_FIREBASE_API_KEY=...
 VITE_FIREBASE_AUTH_DOMAIN=...
@@ -76,12 +82,14 @@ VITE_SOCKET_URL=http://localhost:3000
 ## 🎯 Funcionalidades
 
 ### Login
+
 - Autenticación con Google
 - Redirección automática al perfil
 - Diseño fiel a las imágenes de referencia
 - Footer con mapa del sitio completo
 
 ### Chat Global
+
 - Conexión en tiempo real vía WebSockets
 - Interfaz intuitiva y moderna
 - Mensajes con timestamp
@@ -106,6 +114,7 @@ VITE_SOCKET_URL=http://localhost:3000
 ## 🚦 Próximos Pasos
 
 Para que el chat funcione completamente, necesitas:
+
 1. Configurar un servidor Socket.IO en `http://localhost:3000`
 2. El servidor debe escuchar eventos:
    - `message` - Para recibir mensajes nuevos
@@ -129,14 +138,17 @@ npm run build
 ## 📝 Commits Realizados
 
 ### Rama develop-auth
+
 1. "Add firebase config and UserDAO"
 2. "Update login page design with CHARLATON style and Google auth integration"
 
 ### Rama develop-websockets
+
 1. "Add socket.io-client dependency and socket URL config"
 2. "Add socket.io client configuration"
 3. "Add global chat component with websockets integration"
 4. "Update routes and profile to include chat navigation"
 
 ---
+
 Desarrollado siguiendo las especificaciones del diseño CHARLATON
