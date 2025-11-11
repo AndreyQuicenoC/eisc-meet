@@ -1,0 +1,209 @@
+// Navbar Component Styles
+.navbar {
+  width: 100%;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 2rem;
+  position: fixed;
+  top: 0;
+  z-index: 40;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+  }
+
+  .navbar-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 41;
+
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(to right, #06b6d4, #0891b2);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        margin: 0;
+        white-space: nowrap;
+
+        @media (max-width: 480px) {
+          font-size: 1.25rem;
+        }
+      }
+    }
+
+    // Botón hamburguesa
+    .hamburger-btn {
+      display: none;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0.5rem;
+      z-index: 41;
+
+      @media (max-width: 768px) {
+        display: block;
+      }
+
+      .hamburger-icon {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        width: 1.5rem;
+        height: 1.25rem;
+        position: relative;
+
+        span {
+          display: block;
+          width: 100%;
+          height: 0.125rem;
+          background-color: #06b6d4;
+          transition: all 0.3s ease;
+          border-radius: 2px;
+        }
+
+        &.open {
+          span:nth-child(1) {
+            transform: rotate(45deg) translate(0.4rem, 0.4rem);
+          }
+
+          span:nth-child(2) {
+            opacity: 0;
+          }
+
+          span:nth-child(3) {
+            transform: rotate(-45deg) translate(0.4rem, -0.4rem);
+          }
+        }
+      }
+    }
+
+    // Navegación principal (solo visible cuando no hay usuario)
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      background: transparent;
+      padding: 0;
+
+      @media (max-width: 640px) {
+        gap: 1rem;
+      }
+
+      @media (max-width: 480px) {
+        gap: 0.75rem;
+      }
+
+      a {
+        color: #4b5563;
+        text-decoration: none;
+        font-size: 0.95rem;
+        transition: color 0.2s;
+        white-space: nowrap;
+
+        @media (max-width: 480px) {
+          font-size: 0.85rem;
+        }
+
+        &:hover {
+          color: #111827;
+        }
+      }
+    }
+
+    // Sección de autenticación
+    .auth-section {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+
+      @media (max-width: 768px) {
+        position: fixed;
+        top: 4rem;
+        right: 0;
+        background: white;
+        flex-direction: column;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        transform: translateX(120%);
+        transition: transform 0.3s ease;
+        gap: 0.75rem;
+        min-width: 200px;
+        margin-right: 1rem;
+
+        &.mobile-open {
+          transform: translateX(0);
+        }
+      }
+
+      @media (max-width: 640px) {
+        gap: 0.5rem;
+        top: 3.5rem;
+      }
+
+      .user-name {
+        color: #374151;
+        font-size: 0.875rem;
+        font-weight: 500;
+
+        @media (max-width: 768px) {
+          display: block;
+          text-align: center;
+        }
+      }
+
+      button {
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        cursor: pointer;
+        white-space: nowrap;
+        border: none;
+
+        @media (max-width: 768px) {
+          width: 100%;
+        }
+
+        @media (max-width: 480px) {
+          padding: 0.4rem 0.875rem;
+          font-size: 0.75rem;
+        }
+
+        &.btn-outline {
+          background: transparent;
+          color: #06b6d4;
+          border: 2px solid #06b6d4;
+
+          &:hover {
+            background: #ecfeff;
+          }
+        }
+
+        &.btn-primary {
+          background: #06b6d4;
+          color: white;
+          border: 2px solid #06b6d4;
+
+          &:hover {
+            background: #0891b2;
+            border-color: #0891b2;
+          }
+        }
+      }
+    }
+  }
+}
