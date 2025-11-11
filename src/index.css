@@ -5,7 +5,7 @@
 }
 
 body {
-  @apply font-poppins;
+  @apply font-poppins m-0 p-0;
 }
 
 .container-page > div:not(:has(form)) {
@@ -13,20 +13,7 @@ body {
 }
 
 a {
-  @apply text-white hover:underline text-lg;
-}
-
-nav {
-  @apply fixed w-full;
-}
-
-nav,
-footer {
-  @apply flex gap-8 bg-purple-900 justify-center p-4 text-lg;
-}
-
-button {
-  @apply bg-purple-700 text-white py-2 p-2 rounded hover:bg-purple-800 w-48 text-lg cursor-pointer;
+  @apply hover:underline;
 }
 
 h1 {
@@ -57,15 +44,6 @@ h2 {
   @apply block text-sm font-medium text-gray-700 dark:text-gray-300;
 }
 
-.container-page > div > div:last-child > button {
-  @apply w-full mt-1 flex items-center justify-center gap-3;
-  @apply bg-violet-600 hover:bg-violet-700 active:bg-violet-800;
-  @apply text-white shadow-lg hover:shadow-xl;
-  @apply transition-all duration-200 ease-in-out;
-  @apply transform hover:scale-105 active:scale-95;
-  @apply focus:outline-none focus:ring-4 focus:ring-violet-300 focus:ring-offset-2;
-}
-
-.container-page > div > div:last-child > button img {
-  @apply w-6 h-6;
+button {
+  @apply py-2 px-4 rounded transition-all cursor-pointer;
 }
