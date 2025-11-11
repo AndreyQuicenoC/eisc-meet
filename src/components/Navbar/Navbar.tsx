@@ -35,20 +35,18 @@ const Navbar: React.FC<NavbarProps> = ({
           <h1>CHARLATON</h1>
         </div>
 
-        {/* Botón hamburguesa - solo visible en móvil */}
-        {user && (
-          <button 
-            className="hamburger-btn" 
-            onClick={toggleMenu}
-            aria-label="Toggle menu"
-          >
-            <span className={`hamburger-icon ${isMenuOpen ? 'open' : ''}`}>
-              <span></span>
-              <span></span>
-              <span></span>
-            </span>
-          </button>
-        )}
+        {/* Botón hamburguesa - visible en móvil */}
+        <button
+          className="hamburger-btn"
+          onClick={toggleMenu}
+          aria-label="Toggle menu"
+        >
+          <span className={`hamburger-icon ${isMenuOpen ? "open" : ""}`}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
 
         {/* Navegación - solo visible cuando NO hay usuario autenticado */}
         {!user && (
@@ -61,7 +59,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
         {/* Sección de autenticación */}
         {showAuthButtons && (
-          <div className={`auth-section ${isMenuOpen ? 'mobile-open' : ''}`}>
+          <div className={`auth-section ${isMenuOpen ? "mobile-open" : ""}`}>
             {user ? (
               <>
                 <span className="user-name">
@@ -73,7 +71,10 @@ const Navbar: React.FC<NavbarProps> = ({
               </>
             ) : (
               <>
-                <button className="btn-outline" onClick={() => navigate("/login")}>
+                <button
+                  className="btn-outline"
+                  onClick={() => navigate("/login")}
+                >
                   INICIAR SESIÓN
                 </button>
                 <button className="btn-primary">REGISTRARSE</button>
