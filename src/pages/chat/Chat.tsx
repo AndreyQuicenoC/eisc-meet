@@ -26,8 +26,14 @@ const Chat: React.FC = () => {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [isConnected, setIsConnected] = useState(false);
+  const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasLoadedHistory = useRef(false);
+
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   useEffect(() => {
     // Verificar autenticación
@@ -36,14 +42,16 @@ const Chat: React.FC = () => {
       return;
     }
 
-    // Conectar al socket
-    socket.connect();
+    // Solo conectar si no está manualmente desconectado
+    if (!isManuallyDisconnected) {
+      socket.connect();
+    }
 
     // Event listeners
     socket.on("connect", () => {
       setIsConnected(true);
       console.log("✅ Conectado al servidor de chat");
-      
+
       // Registrar usuario en el servidor
       if (user?.email) {
         socket.emit("newUser", user.email);
@@ -74,9 +82,11 @@ const Chat: React.FC = () => {
       socket.off("disconnect");
       socket.off("newMessage");
       socket.off("usersOnline");
-      socket.disconnect();
+      if (!isManuallyDisconnected) {
+        socket.disconnect();
+      }
     };
-  }, [user, navigate]);
+  }, [user, navigate, isManuallyDisconnected]);
 
   // Cargar historial de mensajes una sola vez
   useEffect(() => {
@@ -89,12 +99,13 @@ const Chat: React.FC = () => {
   // Cargar historial de mensajes desde el API
   const loadChatHistory = async () => {
     try {
-      const API_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:3000";
+      const API_URL =
+        import.meta.env.VITE_SOCKET_URL || "http://localhost:3000";
       console.log("📥 Cargando historial de mensajes...");
-      
+
       const response = await fetch(`${API_URL}/api/messages?limit=100`);
       const data = await response.json();
-      
+
       if (data.success && data.messages) {
         setMessages(data.messages);
         console.log("✅ Historial cargado:", data.messages.length, "mensajes");
@@ -114,7 +125,7 @@ const Chat: React.FC = () => {
     if (!messageInput.trim() || !user || !isConnected) return;
 
     console.log("📤 Enviando mensaje:", messageInput);
-    
+
     // Enviar mensaje al servidor
     socket.emit("sendMessage", {
       senderId: user.email || user.displayName || "Usuario",
@@ -127,6 +138,20 @@ const Chat: React.FC = () => {
   const handleLogout = () => {
     socket.disconnect();
     navigate("/login");
+  };
+
+  const handleToggleConnection = () => {
+    if (isConnected) {
+      // Desconectar manualmente
+      socket.disconnect();
+      setIsManuallyDisconnected(true);
+      console.log("🔌 Desconectado manualmente del chat");
+    } else {
+      // Reconectar
+      socket.connect();
+      setIsManuallyDisconnected(false);
+      console.log("🔌 Reconectando al chat...");
+    }
   };
 
   return (
@@ -156,8 +181,33 @@ const Chat: React.FC = () => {
                   )}
                 </p>
               </div>
-              <div className="message-count">
-                {onlineUsers.length} usuario{onlineUsers.length !== 1 ? 's' : ''} online | {messages.length} mensaje{messages.length !== 1 ? 's' : ''}
+              <div className="header-actions">
+                <div className="message-count">
+                  {onlineUsers.length} usuario
+                  {onlineUsers.length !== 1 ? "s" : ""} online | {messages.length}{" "}
+                  mensaje{messages.length !== 1 ? "s" : ""}
+                </div>
+                <button
+                  onClick={handleToggleConnection}
+                  className={`connection-toggle-btn ${isConnected ? 'connected' : 'disconnected'}`}
+                  title={isConnected ? "Desconectar del chat" : "Conectar al chat"}
+                >
+                  {isConnected ? (
+                    <>
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3" />
+                      </svg>
+                      <span className="btn-text">Desconectar</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                      </svg>
+                      <span className="btn-text">Conectar</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
@@ -178,9 +228,10 @@ const Chat: React.FC = () => {
               </div>
             ) : (
               messages.map((msg, index) => {
-                const isOwnMessage = msg.senderId === user?.email || 
-                                    msg.senderId === user?.displayName;
-                
+                const isOwnMessage =
+                  msg.senderId === user?.email ||
+                  msg.senderId === user?.displayName;
+
                 return (
                   <div
                     key={msg.id || `${msg.timestamp}-${index}`}

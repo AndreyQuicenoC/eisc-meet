@@ -95,6 +95,84 @@
             }
           }
 
+          .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+
+            @media (max-width: 640px) {
+              width: 100%;
+              flex-direction: column;
+              align-items: flex-start;
+              gap: 0.5rem;
+            }
+
+            .message-count {
+              font-size: 0.875rem;
+              color: #6b7280;
+
+              @media (max-width: 480px) {
+                font-size: 0.75rem;
+              }
+            }
+
+            .connection-toggle-btn {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              padding: 0.625rem 1rem;
+              border-radius: 0.75rem;
+              font-size: 0.875rem;
+              font-weight: 600;
+              border: none;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+              @media (max-width: 640px) {
+                width: 100%;
+                justify-content: center;
+              }
+
+              svg {
+                width: 1.25rem;
+                height: 1.25rem;
+              }
+
+              .btn-text {
+                @media (max-width: 480px) {
+                  display: none;
+                }
+              }
+
+              &.connected {
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                color: white;
+
+                &:hover {
+                  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                  box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.4);
+                  transform: translateY(-2px);
+                }
+              }
+
+              &.disconnected {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: white;
+
+                &:hover {
+                  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+                  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4);
+                  transform: translateY(-2px);
+                }
+              }
+
+              &:active {
+                transform: translateY(0);
+              }
+            }
+          }
+
           .message-count {
             font-size: 0.875rem;
             color: #6b7280;
