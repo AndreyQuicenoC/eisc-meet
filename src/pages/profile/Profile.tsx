@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../stores/useAuthStore'
+import './Profile.scss'
 
 const Profile: React.FC = () => {
     const navigate = useNavigate()
@@ -13,15 +14,15 @@ const Profile: React.FC = () => {
     }, [user, navigate])
 
     return (
-        <div className="container-page">
-            <div>
+        <div className="profile-page">
+            <div className="profile-card">
                 <h1>Bienvenido</h1>
-                <p className="text-center text-gray-700 mb-6">
+                <p className="welcome-text">
                     {user?.displayName || user?.email}
                 </p>
                 <button 
                     onClick={() => navigate('/chat')}
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-8 py-3 rounded-lg font-medium hover:from-cyan-600 hover:to-blue-600 transition-all shadow-md hover:shadow-lg"
+                    className="chat-button"
                 >
                     Ir al Chat Global
                 </button>
