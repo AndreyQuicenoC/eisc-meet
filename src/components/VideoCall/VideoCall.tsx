@@ -36,37 +36,21 @@ const VideoCall: React.FC = () => {
       signalingSocket.disconnect();
     });
 
-    signalingSocket.on("introduction", (peers: string[]) => {
-      console.log("👥 Peers actuales:", peers);
-      // Si hay otro peer conectado, guardar su ID
-      if (peers.length > 0) {
-        const otherPeer = peers.find((id) => id !== signalingSocket.id);
-        if (otherPeer) {
-          setRemotePeerId(otherPeer);
-        }
-      }
+    signalingSocket.on("remotePeerId", (peerId: string) => {
+      console.log("🆔 Peer ID remoto recibido:", peerId);
+      setRemotePeerId(peerId);
     });
 
-    signalingSocket.on("newUserConnected", (peerId: string) => {
-      console.log("👤 Nuevo usuario conectado:", peerId);
-      if (peerId !== signalingSocket.id) {
-        setRemotePeerId(peerId);
-      }
-    });
-
-    signalingSocket.on("userDisconnected", (peerId: string) => {
-      console.log("👋 Usuario desconectado:", peerId);
-      if (peerId === remotePeerId) {
-        endCall();
-      }
+    signalingSocket.on("userDisconnected", () => {
+      console.log("👋 Usuario remoto desconectado");
+      endCall();
     });
 
     return () => {
       signalingSocket.off("connect");
       signalingSocket.off("disconnect");
       signalingSocket.off("roomFull");
-      signalingSocket.off("introduction");
-      signalingSocket.off("newUserConnected");
+      signalingSocket.off("remotePeerId");
       signalingSocket.off("userDisconnected");
       endCall();
       if (signalingSocket.connected) {
@@ -75,6 +59,32 @@ const VideoCall: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Efecto para llamar al peer remoto cuando se recibe su ID
+  useEffect(() => {
+    if (remotePeerId && peerRef.current && localStreamRef.current && !callRef.current) {
+      console.log("📞 Llamando a peer remoto:", remotePeerId);
+      const call = peerRef.current.call(remotePeerId, localStreamRef.current);
+      callRef.current = call;
+      
+      call.on("stream", (remoteStream) => {
+        console.log("📹 Stream remoto recibido en llamada saliente");
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = remoteStream;
+        }
+      });
+
+      call.on("close", () => {
+        console.log("📞 Llamada cerrada");
+        endCall();
+      });
+
+      call.on("error", (err) => {
+        console.error("❌ Error en la llamada:", err);
+        alert("Error en la llamada: " + err.message);
+      });
+    }
+  }, [remotePeerId]);
 
   const startCall = async () => {
     try {
@@ -174,29 +184,8 @@ const VideoCall: React.FC = () => {
       peer.on("open", (id) => {
         console.log("🆔 Mi Peer ID:", id);
         
-        // Si hay un peer remoto, llamarlo
-        if (remotePeerId) {
-          console.log("📞 Llamando a peer remoto:", remotePeerId);
-          const call = peer.call(remotePeerId, stream);
-          callRef.current = call;
-          
-          call.on("stream", (remoteStream) => {
-            console.log("📹 Stream remoto recibido");
-            if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = remoteStream;
-            }
-          });
-
-          call.on("close", () => {
-            console.log("📞 Llamada cerrada");
-            endCall();
-          });
-
-          call.on("error", (err) => {
-            console.error("❌ Error en la llamada:", err);
-            alert("Error en la llamada: " + err.message);
-          });
-        }
+        // Registrar el Peer ID en el servidor de signaling
+        signalingSocket.emit("registerPeerId", id);
       });
 
       peer.on("call", (call) => {
