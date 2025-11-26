@@ -133,13 +133,13 @@ const VideoCall: React.FC = () => {
   };
 
   const setupCallHandlers = (call: any) => {
-    call.on("stream", (remoteStream) => {
+    call.on("stream", (remoteStream: MediaStream) => {
       console.log("📹 Stream remoto recibido");
       logStreamInfo(remoteStream, "remoto recibido");
       
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = remoteStream;
-        remoteVideoRef.current.play().catch(err => {
+        remoteVideoRef.current.play().catch((err: Error) => {
           console.error("❌ Error reproduciendo video remoto:", err);
         });
       }
@@ -154,7 +154,7 @@ const VideoCall: React.FC = () => {
       hasInitiatedCallRef.current = false;
     });
 
-    call.on("error", (err) => {
+    call.on("error", (err: Error) => {
       console.error("❌ Error en la llamada:", err);
       hasInitiatedCallRef.current = false;
     });
