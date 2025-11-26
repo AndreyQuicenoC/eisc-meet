@@ -8,17 +8,27 @@ import "./Login.scss";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { user, loginWithGoogle } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
+  const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
 
   useEffect(() => {
     if (user) {
-      navigate("/chat");
+      navigate("/chat", { replace: true });
     }
   }, [user, navigate]);
 
   const handleLoginGoogle = async (e: React.FormEvent) => {
     e.preventDefault();
-    await loginWithGoogle();
+    try {
+      await loginWithGoogle();
+    } catch (error) {
+      console.error("Error en login:", error);
+    }
+  };
+
+  const handleRegister = (e: React.MouseEvent) => {
+    e.preventDefault();
+    handleLoginGoogle(e as any);
   };
 
   return (
@@ -50,7 +60,7 @@ const Login: React.FC = () => {
 
           {/* Register Link */}
           <p className="register-link">
-            ¿No tienes una cuenta? <a href="#">Regístrate</a>
+            ¿No tienes una cuenta? <a href="#" onClick={handleRegister}>Regístrate</a>
           </p>
         </div>
       </main>
