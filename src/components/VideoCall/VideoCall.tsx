@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import SimplePeer from "simple-peer";
-import { signalingSocket, iceServersConfig } from "../../lib/webrtc.config";
+import Peer, { MediaConnection } from "peerjs";
+import { signalingSocket } from "../../lib/webrtc.config";
 import "./VideoCall.scss";
 
 const VideoCall: React.FC = () => {
@@ -10,12 +10,13 @@ const VideoCall: React.FC = () => {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [remotePeerId, setRemotePeerId] = useState<string | null>(null);
   const [roomFull, setRoomFull] = useState(false);
+  const [myPeerId, setMyPeerId] = useState<string | null>(null);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
-  const peerRef = useRef<SimplePeer.Instance | null>(null);
+  const peerRef = useRef<Peer | null>(null);
+  const callRef = useRef<MediaConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-  const signalQueueRef = useRef<SimplePeer.SignalData[]>([]);
 
   useEffect(() => {
     // Configurar listeners pero NO conectar aún
@@ -54,20 +55,6 @@ const VideoCall: React.FC = () => {
       }
     });
 
-    signalingSocket.on("signal", (_to: string, from: string, signal: SimplePeer.SignalData) => {
-      console.log("📡 Señal recibida de:", from);
-      if (peerRef.current) {
-        try {
-          peerRef.current.signal(signal);
-        } catch (err) {
-          console.error("Error procesando señal:", err);
-        }
-      } else {
-        // Guardar señal para procesarla después
-        signalQueueRef.current.push(signal);
-      }
-    });
-
     signalingSocket.on("userDisconnected", (peerId: string) => {
       console.log("👋 Usuario desconectado:", peerId);
       if (peerId === remotePeerId) {
@@ -81,7 +68,6 @@ const VideoCall: React.FC = () => {
       signalingSocket.off("roomFull");
       signalingSocket.off("introduction");
       signalingSocket.off("newUserConnected");
-      signalingSocket.off("signal");
       signalingSocket.off("userDisconnected");
       endCall();
       if (signalingSocket.connected) {
@@ -103,7 +89,7 @@ const VideoCall: React.FC = () => {
           } else {
             const timeout = setTimeout(() => {
               reject(new Error("Timeout conectando al servidor"));
-            }, 10000); // Aumentado a 10 segundos
+            }, 10000); // 10 segundos
             
             signalingSocket.once("connect", () => {
               clearTimeout(timeout);
@@ -173,72 +159,86 @@ const VideoCall: React.FC = () => {
 
       setIsCallActive(true);
 
-      // Esperar un momento para que se establezca remotePeerId
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Determinar si somos el initiator (si ya hay alguien conectado)
-      const isInitiator = remotePeerId !== null;
-
-      console.log(`🎬 Iniciando peer como ${isInitiator ? 'INITIATOR' : 'RECEIVER'}`);
-
-      // Crear peer connection con configuración simplificada
-      const peer = new SimplePeer({
-        initiator: isInitiator,
-        stream: stream,
-        trickle: true,
-        config: iceServersConfig,
+      // Crear peer connection con PeerJS
+      const peer = new Peer({
+        config: {
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+            { urls: "stun:stun2.l.google.com:19302" },
+          ],
+        },
       });
 
       peerRef.current = peer;
 
-      // Procesar señales en cola
-      if (signalQueueRef.current.length > 0) {
-        console.log(`📥 Procesando ${signalQueueRef.current.length} señales en cola`);
-        signalQueueRef.current.forEach(signal => {
-          try {
-            peer.signal(signal);
-          } catch (err) {
-            console.error("Error procesando señal en cola:", err);
+      peer.on("open", (id) => {
+        console.log("🆔 Mi Peer ID:", id);
+        setMyPeerId(id);
+        
+        // Si hay un peer remoto, llamarlo
+        if (remotePeerId) {
+          console.log("📞 Llamando a peer remoto:", remotePeerId);
+          const call = peer.call(remotePeerId, stream);
+          callRef.current = call;
+          
+          call.on("stream", (remoteStream) => {
+            console.log("📹 Stream remoto recibido");
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.srcObject = remoteStream;
+            }
+          });
+
+          call.on("close", () => {
+            console.log("📞 Llamada cerrada");
+            endCall();
+          });
+
+          call.on("error", (err) => {
+            console.error("❌ Error en la llamada:", err);
+            alert("Error en la llamada: " + err.message);
+          });
+        }
+      });
+
+      peer.on("call", (call) => {
+        console.log("📞 Llamada entrante");
+        // Responder automáticamente con nuestro stream
+        call.answer(stream);
+        callRef.current = call;
+        
+        call.on("stream", (remoteStream) => {
+          console.log("📹 Stream remoto recibido");
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = remoteStream;
           }
         });
-        signalQueueRef.current = [];
-      }
 
-      peer.on("signal", (signal) => {
-        console.log("📤 Enviando señal...");
-        if (remotePeerId) {
-          signalingSocket.emit("signal", remotePeerId, signalingSocket.id, signal);
-        } else {
-          console.log("⏳ Esperando peer remoto para enviar señal...");
-          // Esperar a que llegue el peer remoto
-          const waitForRemote = setInterval(() => {
-            if (remotePeerId) {
-              console.log("✅ Peer remoto detectado, enviando señal");
-              signalingSocket.emit("signal", remotePeerId, signalingSocket.id, signal);
-              clearInterval(waitForRemote);
-            }
-          }, 500);
-          // Timeout después de 10 segundos
-          setTimeout(() => clearInterval(waitForRemote), 10000);
-        }
-      });
+        call.on("close", () => {
+          console.log("📞 Llamada cerrada");
+          endCall();
+        });
 
-      peer.on("stream", (remoteStream) => {
-        console.log("📹 Stream remoto recibido");
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = remoteStream;
-        }
-      });
-
-      peer.on("connect", () => {
-        console.log("🔗 Conexión peer-to-peer establecida");
+        call.on("error", (err) => {
+          console.error("❌ Error en la llamada:", err);
+        });
       });
 
       peer.on("error", (err) => {
-        console.error("❌ Error en peer connection:", err);
-        alert("Error en la conexión de video. Por favor, intenta de nuevo.");
+        console.error("❌ Error en peer:", err);
+        alert("Error en la conexión peer: " + err.message);
         endCall();
       });
+
+      peer.on("disconnected", () => {
+        console.log("⚠️ Peer desconectado, intentando reconectar...");
+        peer.reconnect();
+      });
+
+      peer.on("close", () => {
+        console.log("🔒 Peer cerrado");
+      });
+
     } catch (error: any) {
       console.error("❌ Error en startCall:", error);
       if (error.message !== "Sala llena") {
@@ -251,7 +251,13 @@ const VideoCall: React.FC = () => {
   };
 
   const endCall = () => {
-    // Detener peer connection
+    // Cerrar llamada
+    if (callRef.current) {
+      callRef.current.close();
+      callRef.current = null;
+    }
+
+    // Destruir peer
     if (peerRef.current) {
       peerRef.current.destroy();
       peerRef.current = null;
@@ -280,6 +286,7 @@ const VideoCall: React.FC = () => {
     setIsMuted(false);
     setIsVideoEnabled(true);
     setRemotePeerId(null);
+    setMyPeerId(null);
     setRoomFull(false);
   };
 
