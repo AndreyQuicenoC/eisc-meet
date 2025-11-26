@@ -43,7 +43,15 @@ const VideoCall: React.FC = () => {
 
     signalingSocket.on("userDisconnected", () => {
       console.log("👋 Usuario remoto desconectado");
-      endCall();
+      // Limpiar solo el peer remoto, no desconectar al usuario actual
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = null;
+      }
+      if (callRef.current) {
+        callRef.current.close();
+        callRef.current = null;
+      }
+      setRemotePeerId(null);
     });
 
     return () => {
@@ -63,20 +71,44 @@ const VideoCall: React.FC = () => {
   // Efecto para llamar al peer remoto cuando se recibe su ID
   useEffect(() => {
     if (remotePeerId && peerRef.current && localStreamRef.current && !callRef.current) {
+      const stream = localStreamRef.current;
+      const videoTracks = stream.getVideoTracks();
+      const audioTracks = stream.getAudioTracks();
+      
       console.log("📞 Llamando a peer remoto:", remotePeerId);
-      const call = peerRef.current.call(remotePeerId, localStreamRef.current);
+      console.log("📊 Stream info - Video tracks:", videoTracks.length, "Audio tracks:", audioTracks.length);
+      
+      if (videoTracks.length > 0) {
+        console.log("📹 Video track:", videoTracks[0].label, "enabled:", videoTracks[0].enabled);
+      }
+      if (audioTracks.length > 0) {
+        console.log("🔊 Audio track:", audioTracks[0].label, "enabled:", audioTracks[0].enabled);
+      }
+      
+      const call = peerRef.current.call(remotePeerId, stream);
       callRef.current = call;
       
       call.on("stream", (remoteStream) => {
         console.log("📹 Stream remoto recibido en llamada saliente");
+        const remoteTracks = remoteStream.getTracks();
+        console.log("📊 Remote stream tracks:", remoteTracks.length);
+        remoteTracks.forEach(track => {
+          console.log(`  - ${track.kind}: ${track.label}, enabled: ${track.enabled}`);
+        });
+        
         if (remoteVideoRef.current) {
           remoteVideoRef.current.srcObject = remoteStream;
         }
       });
 
       call.on("close", () => {
-        console.log("📞 Llamada cerrada");
-        endCall();
+        console.log("📞 Llamada cerrada por el otro usuario");
+        // No llamar endCall(), solo limpiar el video remoto
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = null;
+        }
+        callRef.current = null;
+        setRemotePeerId(null);
       });
 
       call.on("error", (err) => {
@@ -189,21 +221,41 @@ const VideoCall: React.FC = () => {
       });
 
       peer.on("call", (call) => {
-        console.log("📞 Llamada entrante");
+        console.log("📞 Llamada entrante desde:", call.peer);
+        
+        const videoTracks = stream.getVideoTracks();
+        const audioTracks = stream.getAudioTracks();
+        console.log("📊 Respondiendo con stream - Video:", videoTracks.length, "Audio:", audioTracks.length);
+        
         // Responder automáticamente con nuestro stream
         call.answer(stream);
         callRef.current = call;
         
         call.on("stream", (remoteStream) => {
-          console.log("📹 Stream remoto recibido");
+          console.log("📹 Stream remoto recibido en llamada entrante");
+          const remoteTracks = remoteStream.getTracks();
+          console.log("📊 Remote stream tracks:", remoteTracks.length);
+          remoteTracks.forEach(track => {
+            console.log(`  - ${track.kind}: ${track.label}, enabled: ${track.enabled}`);
+          });
+          
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = remoteStream;
+            // Forzar reproducción
+            remoteVideoRef.current.play().catch(err => {
+              console.error("Error al reproducir video remoto:", err);
+            });
           }
         });
 
         call.on("close", () => {
-          console.log("📞 Llamada cerrada");
-          endCall();
+          console.log("📞 Llamada cerrada por el otro usuario");
+          // No llamar endCall(), solo limpiar el video remoto
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = null;
+          }
+          callRef.current = null;
+          setRemotePeerId(null);
         });
 
         call.on("error", (err) => {
@@ -340,7 +392,12 @@ const VideoCall: React.FC = () => {
         </div>
 
         <div className="video-panel remote">
-          <video ref={remoteVideoRef} autoPlay playsInline />
+          <video 
+            ref={remoteVideoRef} 
+            autoPlay 
+            playsInline
+            controls={false}
+          />
           <div className="video-label">
             {remotePeerId ? "Usuario remoto" : "Esperando conexión..."}
           </div>
