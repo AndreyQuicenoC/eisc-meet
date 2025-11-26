@@ -18,6 +18,7 @@ const VideoCall: React.FC = () => {
   const callRef = useRef<any>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const hasInitiatedCallRef = useRef(false);
+  const myPeerIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Configurar listeners de signaling socket
@@ -45,6 +46,13 @@ const VideoCall: React.FC = () => {
 
     const handleRemotePeerId = (peerId: string) => {
       console.log("🆔 Peer ID remoto recibido:", peerId);
+      
+      // Evitar procesar nuestro propio Peer ID
+      if (peerId === myPeerIdRef.current) {
+        console.log("⚠️ Ignorando mi propio Peer ID");
+        return;
+      }
+      
       setRemotePeerId(peerId);
     };
 
@@ -100,22 +108,25 @@ const VideoCall: React.FC = () => {
     console.log("📞 Iniciando llamada a peer remoto:", remotePeerId);
     logStreamInfo(stream, "local antes de llamar");
 
-    try {
-      const call = peer.call(remotePeerId, stream);
-      
-      if (!call) {
-        console.error("❌ No se pudo crear la llamada");
-        hasInitiatedCallRef.current = false;
-        return;
-      }
+    // Esperar un momento para asegurar que el peer remoto está listo
+    setTimeout(() => {
+      try {
+        const call = peer.call(remotePeerId, stream);
+        
+        if (!call) {
+          console.error("❌ No se pudo crear la llamada");
+          hasInitiatedCallRef.current = false;
+          return;
+        }
 
-      callRef.current = call;
-      setupCallHandlers(call);
-      
-    } catch (error) {
-      console.error("❌ Error al iniciar llamada:", error);
-      hasInitiatedCallRef.current = false;
-    }
+        callRef.current = call;
+        setupCallHandlers(call);
+        
+      } catch (error) {
+        console.error("❌ Error al iniciar llamada:", error);
+        hasInitiatedCallRef.current = false;
+      }
+    }, 500); // Delay de 500ms para asegurar que el peer remoto esté listo
   }, [remotePeerId]);
 
   const logStreamInfo = (stream: MediaStream, label: string) => {
@@ -149,17 +160,23 @@ const VideoCall: React.FC = () => {
   };
 
   const setupCallHandlers = (call: any) => {
+    console.log("📝 Configurando handlers para la llamada con:", call.peer);
+    
     call.on("stream", async (remoteStream: MediaStream) => {
-      console.log("📹 Stream remoto recibido");
+      console.log("📹 Stream remoto recibido de:", call.peer);
       logStreamInfo(remoteStream, "remoto recibido");
       
       if (remoteVideoRef.current) {
         // Clear any existing stream first
         if (remoteVideoRef.current.srcObject) {
           const oldStream = remoteVideoRef.current.srcObject as MediaStream;
-          oldStream.getTracks().forEach(track => track.stop());
+          oldStream.getTracks().forEach(track => {
+            console.log("🛑 Deteniendo track antiguo:", track.kind);
+            track.stop();
+          });
         }
         
+        console.log("🔗 Asignando stream remoto al elemento video");
         remoteVideoRef.current.srcObject = remoteStream;
         
         // Force video attributes
@@ -170,18 +187,27 @@ const VideoCall: React.FC = () => {
         await new Promise((resolve) => {
           remoteVideoRef.current!.onloadedmetadata = () => {
             console.log("✅ Metadata del video remoto cargada");
+            console.log("   - Video dimensions:", remoteVideoRef.current!.videoWidth, "x", remoteVideoRef.current!.videoHeight);
             resolve(true);
           };
+          
+          // Timeout de seguridad
+          setTimeout(() => {
+            console.log("⏰ Timeout esperando metadata, intentando reproducir de todos modos");
+            resolve(false);
+          }, 2000);
         });
         
         try {
+          console.log("▶️ Intentando reproducir video remoto...");
           await remoteVideoRef.current.play();
           console.log("✅ Video remoto reproduciéndose correctamente");
         } catch (err: any) {
-          console.error("❌ Error reproduciendo video remoto:", err);
+          console.error("❌ Error reproduciendo video remoto:", err.name, err.message);
           
           // Try with user interaction
           const playWithInteraction = () => {
+            console.log("🖱️ Intentando reproducir con interacción del usuario");
             remoteVideoRef.current?.play()
               .then(() => {
                 console.log("✅ Video remoto reproduciéndose después de interacción");
@@ -192,7 +218,10 @@ const VideoCall: React.FC = () => {
           
           // Add click listener to retry play on user interaction
           document.addEventListener('click', playWithInteraction, { once: true });
+          console.log("👆 Esperando click del usuario para reproducir video");
         }
+      } else {
+        console.error("❌ remoteVideoRef.current es null!");
       }
     });
 
@@ -312,6 +341,7 @@ const VideoCall: React.FC = () => {
 
     peer.on("open", (id) => {
       console.log("🆔 Mi Peer ID:", id);
+      myPeerIdRef.current = id;
       signalingSocket.emit("registerPeerId", id);
     });
 
