@@ -7,16 +7,15 @@
   border-radius: 12px;
   padding: 1rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden; // Prevenir scroll y sobreposición
-  box-sizing: border-box;
 
   @media (max-width: 768px) {
     padding: 0.75rem;
-    border-radius: 8px;
+    border-radius: 10px;
   }
 
   @media (max-width: 480px) {
     padding: 0.5rem;
+    border-radius: 8px;
   }
 }
 
@@ -112,7 +111,6 @@
   gap: 1rem;
   flex: 1;
   min-height: 0;
-  overflow: hidden; // Prevenir scroll interno
 
   @media (min-width: 1024px) {
     flex-direction: row;
@@ -133,22 +131,11 @@
   background: #1a1a2e;
   border-radius: 8px;
   overflow: hidden;
-  min-height: 150px;
-  max-height: 100%; // Prevenir que crezca más allá del contenedor
   display: flex;
   align-items: center;
   justify-content: center;
 
-  @media (max-width: 1024px) {
-    min-height: 140px;
-  }
-
-  @media (max-width: 768px) {
-    min-height: 120px;
-  }
-
   @media (max-width: 480px) {
-    min-height: 100px;
     border-radius: 6px;
   }
 
@@ -303,15 +290,7 @@
       background: rgba(255, 255, 255, 0.2);
     }
 
-    &.muted {
-      background: rgba(248, 113, 113, 0.3);
-      border: 2px solid #f87171;
-
-      @media (max-width: 480px) {
-        border-width: 1.5px;
-      }
-    }
-
+    &.muted,
     &.disabled {
       background: rgba(248, 113, 113, 0.3);
       border: 2px solid #f87171;

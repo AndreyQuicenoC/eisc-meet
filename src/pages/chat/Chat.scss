@@ -1,40 +1,34 @@
 // Chat Page Styles
 .chat-page {
-  min-height: 100vh;
-  max-height: 100vh; // Prevenir que exceda el viewport
   display: flex;
   flex-direction: column;
-  padding-top: 4.5rem; // Espacio para el navbar fijo
-  overflow: hidden; // Prevenir scroll de página completa
+  min-height: 100vh;
+  padding-top: 4.5rem;
 
   @media (max-width: 768px) {
     padding-top: 4rem;
   }
 
-  // Main Content
   .main-content {
     flex: 1;
     background: linear-gradient(135deg, #ecfeff 0%, #cffafe 50%, #e0f2fe 100%);
-    padding: 1.5rem 1rem;
-    min-height: calc(100vh - 4.5rem);
-    max-height: calc(100vh - 4.5rem); // Limitar altura
-    overflow: hidden; // Prevenir scroll
+    padding: 1.5rem;
 
     @media (max-width: 768px) {
-      padding: 1rem 0.5rem;
-      min-height: calc(100vh - 4rem);
-      max-height: calc(100vh - 4rem);
+      padding: 1rem;
     }
 
-    // Container for chat and video side by side
+    @media (max-width: 480px) {
+      padding: 0.75rem;
+    }
+
     .chat-video-container {
       max-width: 1920px;
       margin: 0 auto;
-      height: 100%;
+      height: calc(100vh - 7rem);
       display: grid;
-      grid-template-columns: 30% 70%; // Chat 30%, Video 70%
+      grid-template-columns: 30% 70%;
       gap: 1.5rem;
-      overflow: hidden; // Prevenir sobreposición
 
       @media (max-width: 1400px) {
         grid-template-columns: 35% 65%;
@@ -43,36 +37,32 @@
 
       @media (max-width: 1200px) {
         grid-template-columns: 1fr;
-        grid-template-rows: 50% 50%; // Dividir en 50/50 en tablet
-        height: 100%;
-        overflow: visible;
+        grid-template-rows: 50vh auto;
+        height: auto;
+        gap: 1rem;
       }
 
       @media (max-width: 768px) {
-        grid-template-rows: 55% 45%; // Video 55%, Chat 45%
+        grid-template-rows: 45vh auto;
         gap: 0.75rem;
-        height: 100%;
       }
 
       @media (max-width: 480px) {
+        grid-template-rows: 40vh auto;
         gap: 0.5rem;
-        grid-template-rows: 60% 40%; // Video 60%, Chat 40%
       }
     }
 
     .chat-container {
-      height: 100%;
       display: flex;
       flex-direction: column;
-      min-width: 0; // Prevenir overflow
-      overflow: hidden; // Contener el contenido
+      height: 100%;
 
       @media (max-width: 1200px) {
         order: 2;
         height: auto;
       }
 
-      // Chat Header
       .chat-header {
         background: white;
         border-radius: 1rem 1rem 0 0;
@@ -82,6 +72,11 @@
 
         @media (max-width: 768px) {
           padding: 1rem;
+          border-radius: 0.75rem 0.75rem 0 0;
+        }
+
+        @media (max-width: 480px) {
+          padding: 0.75rem;
         }
 
         .chat-header-content {
@@ -102,8 +97,12 @@
               color: #1f2937;
               margin: 0 0 0.25rem 0;
 
-              @media (max-width: 480px) {
+              @media (max-width: 768px) {
                 font-size: 1.25rem;
+              }
+
+              @media (max-width: 480px) {
+                font-size: 1.125rem;
               }
             }
 
@@ -174,9 +173,19 @@
                 justify-content: center;
               }
 
+              @media (max-width: 480px) {
+                padding: 0.5rem 0.875rem;
+                font-size: 0.8rem;
+              }
+
               svg {
                 width: 1.25rem;
                 height: 1.25rem;
+
+                @media (max-width: 480px) {
+                  width: 1rem;
+                  height: 1rem;
+                }
               }
 
               .btn-text {
@@ -212,19 +221,9 @@
               }
             }
           }
-
-          .message-count {
-            font-size: 0.875rem;
-            color: #6b7280;
-
-            @media (max-width: 480px) {
-              font-size: 0.75rem;
-            }
-          }
         }
       }
 
-      // Messages Container
       .messages-container {
         flex: 1;
         background: white;
@@ -237,6 +236,11 @@
         @media (max-width: 768px) {
           padding: 1rem;
           gap: 0.75rem;
+        }
+
+        @media (max-width: 480px) {
+          padding: 0.75rem;
+          gap: 0.5rem;
         }
 
         .empty-state {
@@ -302,6 +306,11 @@
               padding: 0.75rem 0.875rem;
             }
 
+            @media (max-width: 480px) {
+              max-width: 90%;
+              padding: 0.625rem 0.75rem;
+            }
+
             &.sent-bubble {
               background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
               color: white;
@@ -352,7 +361,6 @@
         }
       }
 
-      // Message Input
       .message-input-form {
         background: white;
         border-radius: 0 0 1rem 1rem;
@@ -362,6 +370,11 @@
 
         @media (max-width: 768px) {
           padding: 0.75rem;
+          border-radius: 0 0 0.75rem 0.75rem;
+        }
+
+        @media (max-width: 480px) {
+          padding: 0.625rem;
         }
 
         .input-container {
@@ -380,8 +393,13 @@
             font-size: 0.95rem;
             transition: all 0.2s;
 
-            @media (max-width: 480px) {
+            @media (max-width: 768px) {
               padding: 0.75rem 0.875rem;
+              font-size: 0.9rem;
+            }
+
+            @media (max-width: 480px) {
+              padding: 0.625rem 0.75rem;
               font-size: 0.85rem;
             }
 
@@ -415,7 +433,7 @@
             }
 
             @media (max-width: 480px) {
-              padding: 0.75rem 1rem;
+              padding: 0.625rem 1rem;
             }
 
             svg {
@@ -431,6 +449,7 @@
             &:hover:not(:disabled) {
               background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
               box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+              transform: translateY(-1px);
             }
 
             &:disabled {
@@ -442,15 +461,13 @@
       }
     }
 
-    // Video Section
     .video-section {
-      height: 100%;
       display: flex;
-      min-width: 0; // Prevenir overflow
-      overflow: hidden; // Contener el contenido
+      height: 100%;
 
       @media (max-width: 1200px) {
         order: 1;
+        height: auto;
       }
     }
   }
