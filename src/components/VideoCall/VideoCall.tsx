@@ -154,25 +154,44 @@ const VideoCall: React.FC = () => {
       logStreamInfo(remoteStream, "remoto recibido");
       
       if (remoteVideoRef.current) {
+        // Clear any existing stream first
+        if (remoteVideoRef.current.srcObject) {
+          const oldStream = remoteVideoRef.current.srcObject as MediaStream;
+          oldStream.getTracks().forEach(track => track.stop());
+        }
+        
         remoteVideoRef.current.srcObject = remoteStream;
         
-        // Esperar un momento para que el navegador procese el stream
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Force video attributes
+        remoteVideoRef.current.muted = false;
+        remoteVideoRef.current.volume = 1.0;
+        
+        // Wait for metadata to load
+        await new Promise((resolve) => {
+          remoteVideoRef.current!.onloadedmetadata = () => {
+            console.log("✅ Metadata del video remoto cargada");
+            resolve(true);
+          };
+        });
         
         try {
           await remoteVideoRef.current.play();
           console.log("✅ Video remoto reproduciéndose correctamente");
         } catch (err: any) {
           console.error("❌ Error reproduciendo video remoto:", err);
-          // Intentar nuevamente después de un momento
-          setTimeout(async () => {
-            try {
-              await remoteVideoRef.current?.play();
-              console.log("✅ Video remoto reproduciéndose en segundo intento");
-            } catch (retryErr) {
-              console.error("❌ Error en segundo intento:", retryErr);
-            }
-          }, 500);
+          
+          // Try with user interaction
+          const playWithInteraction = () => {
+            remoteVideoRef.current?.play()
+              .then(() => {
+                console.log("✅ Video remoto reproduciéndose después de interacción");
+                document.removeEventListener('click', playWithInteraction);
+              })
+              .catch(retryErr => console.error("❌ Error en retry:", retryErr));
+          };
+          
+          // Add click listener to retry play on user interaction
+          document.addEventListener('click', playWithInteraction, { once: true });
         }
       }
     });
@@ -300,13 +319,18 @@ const VideoCall: React.FC = () => {
       console.log("📞 Llamada entrante de:", call.peer);
       logStreamInfo(stream, "local para responder");
       
+      // Answer with local stream
       call.answer(stream);
+      console.log("✅ Llamada respondida con stream local");
       
+      // Only set callRef if we don't have one already
       if (!callRef.current) {
         callRef.current = call;
         hasInitiatedCallRef.current = true;
+        console.log("📝 CallRef establecido para llamada entrante");
       }
       
+      // Setup handlers for this call
       setupCallHandlers(call);
     });
 
@@ -470,13 +494,19 @@ const VideoCall: React.FC = () => {
 
       {roomFull && (
         <div className="room-full-warning">
-          ⚠️ La sala está llena. Solo se permiten 2 usuarios.
+          <svg className="warning-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          La sala está llena. Solo se permiten 2 usuarios.
         </div>
       )}
 
       {!isCallActive && !roomFull && (
         <div className="video-info">
-          💡 <strong>Nota:</strong> Al iniciar la llamada, tu navegador pedirá permiso para acceder a la cámara y micrófono.
+          <svg className="info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <strong>Nota:</strong> Al iniciar la llamada, tu navegador pedirá permiso para acceder a la cámara y micrófono.
         </div>
       )}
 
@@ -516,7 +546,10 @@ const VideoCall: React.FC = () => {
             disabled={roomFull}
             className="btn-start-call"
           >
-            📞 Iniciar Llamada
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            Iniciar Llamada
           </button>
         ) : (
           <>
@@ -525,7 +558,16 @@ const VideoCall: React.FC = () => {
               className={`btn-control ${isMuted ? "muted" : ""}`}
               title={isMuted ? "Activar micrófono" : "Silenciar micrófono"}
             >
-              {isMuted ? "🔇" : "🔊"}
+              {isMuted ? (
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                </svg>
+              ) : (
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+              )}
             </button>
 
             <button
@@ -533,11 +575,22 @@ const VideoCall: React.FC = () => {
               className={`btn-control ${!isVideoEnabled ? "disabled" : ""}`}
               title={isVideoEnabled ? "Desactivar cámara" : "Activar cámara"}
             >
-              {isVideoEnabled ? "📹" : "📷"}
+              {isVideoEnabled ? (
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              ) : (
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              )}
             </button>
 
             <button onClick={endCall} className="btn-end-call">
-              📞 Finalizar
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" />
+              </svg>
+              Finalizar
             </button>
           </>
         )}

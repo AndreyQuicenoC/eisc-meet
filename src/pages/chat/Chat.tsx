@@ -29,7 +29,10 @@ const Chat: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const hasLoadedHistory = useRef(false);
+  const isUserScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Scroll to top on component mount
   useEffect(() => {
@@ -86,6 +89,9 @@ const Chat: React.FC = () => {
       if (!isManuallyDisconnected) {
         socket.disconnect();
       }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
     };
   }, [user, navigate, isManuallyDisconnected]);
 
@@ -116,9 +122,47 @@ const Chat: React.FC = () => {
     }
   };
 
+  // Handle scroll detection to prevent auto-scroll when user is manually scrolling
   useEffect(() => {
-    // Scroll to bottom when new messages arrive
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const messagesContainer = messagesContainerRef.current;
+    if (!messagesContainer) return;
+
+    const handleScroll = () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+      
+      // Mark as user scrolling if not near bottom
+      if (!isNearBottom) {
+        isUserScrollingRef.current = true;
+      } else {
+        isUserScrollingRef.current = false;
+      }
+
+      // Reset user scrolling flag after 1 second of no scrolling
+      scrollTimeoutRef.current = setTimeout(() => {
+        isUserScrollingRef.current = false;
+      }, 1000);
+    };
+
+    messagesContainer.addEventListener('scroll', handleScroll);
+    return () => {
+      messagesContainer.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Auto-scroll when messages change, but only if user isn't manually scrolling
+  useEffect(() => {
+    if (!isUserScrollingRef.current && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   }, [messages]);
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -248,7 +292,7 @@ const Chat: React.FC = () => {
             </div>
 
             {/* Messages Container */}
-            <div className="messages-container">
+            <div className="messages-container" ref={messagesContainerRef}>
               {messages.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-content">
