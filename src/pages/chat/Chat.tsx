@@ -136,9 +136,19 @@ const Chat: React.FC = () => {
     setMessageInput("");
   };
 
-  const handleLogout = () => {
-    socket.disconnect();
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      // Desconectar socket antes de cerrar sesión
+      socket.disconnect();
+      
+      // Cerrar sesión en Firebase
+      await useAuthStore.getState().logout();
+      
+      // Navegar al login
+      navigate("/login");
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
   };
 
   const handleToggleConnection = () => {

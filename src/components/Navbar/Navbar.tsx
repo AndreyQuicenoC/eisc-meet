@@ -13,14 +13,23 @@ const Navbar: React.FC<NavbarProps> = ({
   onLogout,
 }) => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    } else {
+  const handleLogout = async () => {
+    try {
+      // Llamar al logout del store
+      await logout();
+      
+      // Si hay callback personalizado, ejecutarlo
+      if (onLogout) {
+        onLogout();
+      }
+      
+      // Navegar al login
       navigate("/login");
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
     }
   };
 

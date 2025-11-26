@@ -96,14 +96,14 @@ const VideoCall: React.FC = () => {
       // Conectar al servidor de signaling si no está conectado
       if (!signalingSocket.connected) {
         signalingSocket.connect();
-        // Esperar a que se conecte
+        // Esperar a que se conecte con timeout más largo
         await new Promise<void>((resolve, reject) => {
           if (signalingSocket.connected) {
             resolve();
           } else {
             const timeout = setTimeout(() => {
               reject(new Error("Timeout conectando al servidor"));
-            }, 5000);
+            }, 10000); // Aumentado a 10 segundos
             
             signalingSocket.once("connect", () => {
               clearTimeout(timeout);
@@ -113,6 +113,11 @@ const VideoCall: React.FC = () => {
             signalingSocket.once("roomFull", () => {
               clearTimeout(timeout);
               reject(new Error("Sala llena"));
+            });
+
+            signalingSocket.once("connect_error", (error) => {
+              clearTimeout(timeout);
+              reject(new Error("Error de conexión: " + error.message));
             });
           }
         });
@@ -176,12 +181,12 @@ const VideoCall: React.FC = () => {
 
       console.log(`🎬 Iniciando peer como ${isInitiator ? 'INITIATOR' : 'RECEIVER'}`);
 
-      // Crear peer connection
+      // Crear peer connection con configuración simplificada
       const peer = new SimplePeer({
         initiator: isInitiator,
         stream: stream,
-        config: iceServersConfig,
         trickle: true,
+        config: iceServersConfig,
       });
 
       peerRef.current = peer;
