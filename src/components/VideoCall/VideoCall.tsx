@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import Peer, { MediaConnection } from "peerjs";
+import Peer from "peerjs";
 import { signalingSocket } from "../../lib/webrtc.config";
 import "./VideoCall.scss";
 
@@ -10,12 +10,11 @@ const VideoCall: React.FC = () => {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [remotePeerId, setRemotePeerId] = useState<string | null>(null);
   const [roomFull, setRoomFull] = useState(false);
-  const [myPeerId, setMyPeerId] = useState<string | null>(null);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerRef = useRef<Peer | null>(null);
-  const callRef = useRef<MediaConnection | null>(null);
+  const callRef = useRef<any>(null); // MediaConnection type
   const localStreamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
@@ -174,7 +173,6 @@ const VideoCall: React.FC = () => {
 
       peer.on("open", (id) => {
         console.log("🆔 Mi Peer ID:", id);
-        setMyPeerId(id);
         
         // Si hay un peer remoto, llamarlo
         if (remotePeerId) {
@@ -286,7 +284,6 @@ const VideoCall: React.FC = () => {
     setIsMuted(false);
     setIsVideoEnabled(true);
     setRemotePeerId(null);
-    setMyPeerId(null);
     setRoomFull(false);
   };
 
