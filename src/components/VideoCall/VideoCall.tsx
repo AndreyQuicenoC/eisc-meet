@@ -121,27 +121,59 @@ const VideoCall: React.FC = () => {
   const logStreamInfo = (stream: MediaStream, label: string) => {
     const videoTracks = stream.getVideoTracks();
     const audioTracks = stream.getAudioTracks();
-    console.log(`📊 Stream ${label}:`);
+    console.log(`📊 Stream ${label}:`)
+    console.log(`  - Stream ID: ${stream.id}`);
+    console.log(`  - Stream active: ${stream.active}`);
     console.log(`  - Video tracks: ${videoTracks.length}`);
-    videoTracks.forEach(track => {
-      console.log(`    * ${track.label}: enabled=${track.enabled}, readyState=${track.readyState}`);
+    videoTracks.forEach((track, index) => {
+      console.log(`    ${index + 1}. ${track.label || 'Video Track'}`);
+      console.log(`       - ID: ${track.id}`);
+      console.log(`       - Enabled: ${track.enabled}`);
+      console.log(`       - ReadyState: ${track.readyState}`);
+      console.log(`       - Muted: ${track.muted}`);
+      const settings = track.getSettings();
+      console.log(`       - Resolution: ${settings.width}x${settings.height}`);
+      console.log(`       - FrameRate: ${settings.frameRate}`);
     });
     console.log(`  - Audio tracks: ${audioTracks.length}`);
-    audioTracks.forEach(track => {
-      console.log(`    * ${track.label}: enabled=${track.enabled}, readyState=${track.readyState}`);
+    audioTracks.forEach((track, index) => {
+      console.log(`    ${index + 1}. ${track.label || 'Audio Track'}`);
+      console.log(`       - ID: ${track.id}`);
+      console.log(`       - Enabled: ${track.enabled}`);
+      console.log(`       - ReadyState: ${track.readyState}`);
+      console.log(`       - Muted: ${track.muted}`);
+      const settings = track.getSettings();
+      console.log(`       - SampleRate: ${settings.sampleRate}`);
+      console.log(`       - ChannelCount: ${settings.channelCount}`);
     });
   };
 
   const setupCallHandlers = (call: any) => {
-    call.on("stream", (remoteStream: MediaStream) => {
+    call.on("stream", async (remoteStream: MediaStream) => {
       console.log("📹 Stream remoto recibido");
       logStreamInfo(remoteStream, "remoto recibido");
       
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = remoteStream;
-        remoteVideoRef.current.play().catch((err: Error) => {
+        
+        // Esperar un momento para que el navegador procese el stream
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        try {
+          await remoteVideoRef.current.play();
+          console.log("✅ Video remoto reproduciéndose correctamente");
+        } catch (err: any) {
           console.error("❌ Error reproduciendo video remoto:", err);
-        });
+          // Intentar nuevamente después de un momento
+          setTimeout(async () => {
+            try {
+              await remoteVideoRef.current?.play();
+              console.log("✅ Video remoto reproduciéndose en segundo intento");
+            } catch (retryErr) {
+              console.error("❌ Error en segundo intento:", retryErr);
+            }
+          }, 500);
+        }
       }
     });
 
@@ -250,7 +282,12 @@ const VideoCall: React.FC = () => {
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
           { urls: "stun:stun2.l.google.com:19302" },
+          { urls: "stun:stun3.l.google.com:19302" },
+          { urls: "stun:stun4.l.google.com:19302" },
         ],
+        iceTransportPolicy: "all",
+        bundlePolicy: "max-bundle",
+        rtcpMuxPolicy: "require",
       },
     });
 
@@ -315,7 +352,17 @@ const VideoCall: React.FC = () => {
       // 3. Mostrar video local
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
-        await localVideoRef.current.play();
+        
+        // Esperar un momento para que el navegador procese el stream
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        try {
+          await localVideoRef.current.play();
+          console.log("✅ Video local reproduciéndose correctamente");
+        } catch (err: any) {
+          console.error("❌ Error reproduciendo video local:", err);
+          // El video local con muted normalmente no debería fallar
+        }
       }
 
       // 4. Configurar PeerJS
