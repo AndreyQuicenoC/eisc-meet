@@ -27,30 +27,33 @@
       margin: 0 auto;
       height: calc(100vh - 8rem);
       display: grid;
-      grid-template-columns: 1fr 400px;
+      grid-template-columns: 30% 70%; // Chat 30%, Video 70%
       gap: 1.5rem;
+      overflow: hidden; // Prevenir sobreposición
 
       @media (max-width: 1400px) {
-        grid-template-columns: 1fr 350px;
+        grid-template-columns: 35% 65%;
+        gap: 1.25rem;
       }
 
       @media (max-width: 1200px) {
         grid-template-columns: 1fr;
-        grid-template-rows: minmax(300px, 400px) 1fr;
+        grid-template-rows: 400px 1fr;
         height: auto;
         min-height: calc(100vh - 8rem);
+        overflow: visible;
       }
 
       @media (max-width: 768px) {
         height: auto;
         min-height: calc(100vh - 6rem);
         gap: 1rem;
-        grid-template-rows: minmax(280px, 350px) 1fr;
+        grid-template-rows: 350px 1fr;
       }
 
       @media (max-width: 480px) {
         gap: 0.75rem;
-        grid-template-rows: minmax(250px, 300px) 1fr;
+        grid-template-rows: 300px 1fr;
       }
     }
 
@@ -58,9 +61,12 @@
       height: 100%;
       display: flex;
       flex-direction: column;
+      min-width: 0; // Prevenir overflow
+      overflow: hidden; // Contener el contenido
 
       @media (max-width: 1200px) {
         order: 2;
+        height: auto;
       }
 
       // Chat Header
@@ -437,18 +443,20 @@
     .video-section {
       height: 100%;
       display: flex;
+      min-width: 0; // Prevenir overflow
+      overflow: hidden; // Contener el contenido
 
       @media (max-width: 1200px) {
         order: 1;
-        height: auto;
+        height: 400px;
       }
 
       @media (max-width: 768px) {
-        min-height: 280px;
+        height: 350px;
       }
 
       @media (max-width: 480px) {
-        min-height: 250px;
+        height: 300px;
       }
     }
   }
