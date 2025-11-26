@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import { onAuthStateChanged, signInWithRedirect, signOut } from "firebase/auth";
 import { auth, googleProvider } from "../lib/firebase.config";
 
 interface User {
@@ -44,7 +44,7 @@ const useAuthStore = create<AuthStore>()((set) => ({
 
     loginWithGoogle: async () => {
         try {
-            await signInWithPopup(auth, googleProvider);
+            await signInWithRedirect(auth, googleProvider);
         } catch (e: any) {
             console.error(e);
         }

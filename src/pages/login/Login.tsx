@@ -1,30 +1,24 @@
 import type React from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../../stores/useAuthStore";
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../../lib/firebase.config";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
 import "./Login.scss";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { setUser } = useAuthStore();
+  const { user, loginWithGoogle } = useAuthStore();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/chat");
+    }
+  }, [user, navigate]);
 
   const handleLoginGoogle = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = {
-        displayName: result.user.displayName,
-        email: result.user.email,
-        photoURL: result.user.photoURL,
-      };
-      setUser(user);
-      navigate("/profile");
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
-    }
+    await loginWithGoogle();
   };
 
   return (

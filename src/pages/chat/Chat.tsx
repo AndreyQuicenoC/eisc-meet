@@ -5,6 +5,7 @@ import { socket } from "../../lib/socket.config";
 import useAuthStore from "../../stores/useAuthStore";
 import Navbar from "../../components/Navbar/Navbar";
 import Footer from "../../components/Footer/Footer";
+import VideoCall from "../../components/VideoCall/VideoCall";
 import "./Chat.scss";
 
 interface Message {
@@ -161,156 +162,164 @@ const Chat: React.FC = () => {
 
       {/* Main Content */}
       <main className="main-content">
-        <div className="chat-container">
-          {/* Chat Header */}
-          <div className="chat-header">
-            <div className="chat-header-content">
-              <div className="chat-title">
-                <h2>Chat Global</h2>
-                <p className="status">
-                  {isConnected ? (
-                    <>
-                      <span className="status-dot online"></span>
-                      Conectado
-                    </>
-                  ) : (
-                    <>
-                      <span className="status-dot offline"></span>
-                      Desconectado
-                    </>
-                  )}
-                </p>
-              </div>
-              <div className="header-actions">
-                <div className="message-count">
-                  {onlineUsers.length} usuario
-                  {onlineUsers.length !== 1 ? "s" : ""} online |{" "}
-                  {messages.length} mensaje{messages.length !== 1 ? "s" : ""}
-                </div>
-                <button
-                  onClick={handleToggleConnection}
-                  className={`connection-toggle-btn ${
-                    isConnected ? "connected" : "disconnected"
-                  }`}
-                  title={
-                    isConnected ? "Desconectar del chat" : "Conectar al chat"
-                  }
-                >
-                  {isConnected ? (
-                    <>
-                      <svg
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3"
-                        />
-                      </svg>
-                      <span className="btn-text">Desconectar</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
-                        />
-                      </svg>
-                      <span className="btn-text">Conectar</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Messages Container */}
-          <div className="messages-container">
-            {messages.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-content">
-                  <svg fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
-                  </svg>
-                  <p className="empty-title">No hay mensajes aún</p>
-                  <p className="empty-subtitle">
-                    ¡Sé el primero en enviar un mensaje!
+        <div className="chat-video-container">
+          {/* Chat Section */}
+          <div className="chat-container">
+            {/* Chat Header */}
+            <div className="chat-header">
+              <div className="chat-header-content">
+                <div className="chat-title">
+                  <h2>Chat Global</h2>
+                  <p className="status">
+                    {isConnected ? (
+                      <>
+                        <span className="status-dot online"></span>
+                        Conectado
+                      </>
+                    ) : (
+                      <>
+                        <span className="status-dot offline"></span>
+                        Desconectado
+                      </>
+                    )}
                   </p>
                 </div>
-              </div>
-            ) : (
-              messages.map((msg, index) => {
-                const isOwnMessage =
-                  msg.senderId === user?.email ||
-                  msg.senderId === user?.displayName;
-
-                return (
-                  <div
-                    key={msg.id || `${msg.timestamp}-${index}`}
-                    className={`message ${isOwnMessage ? "sent" : "received"}`}
+                <div className="header-actions">
+                  <div className="message-count">
+                    {onlineUsers.length} usuario
+                    {onlineUsers.length !== 1 ? "s" : ""} online |{" "}
+                    {messages.length} mensaje{messages.length !== 1 ? "s" : ""}
+                  </div>
+                  <button
+                    onClick={handleToggleConnection}
+                    className={`connection-toggle-btn ${
+                      isConnected ? "connected" : "disconnected"
+                    }`}
+                    title={
+                      isConnected ? "Desconectar del chat" : "Conectar al chat"
+                    }
                   >
+                    {isConnected ? (
+                      <>
+                        <svg
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3"
+                          />
+                        </svg>
+                        <span className="btn-text">Desconectar</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
+                          />
+                        </svg>
+                        <span className="btn-text">Conectar</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Messages Container */}
+            <div className="messages-container">
+              {messages.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-content">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
+                    </svg>
+                    <p className="empty-title">No hay mensajes aún</p>
+                    <p className="empty-subtitle">
+                      ¡Sé el primero en enviar un mensaje!
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                messages.map((msg, index) => {
+                  const isOwnMessage =
+                    msg.senderId === user?.email ||
+                    msg.senderId === user?.displayName;
+
+                  return (
                     <div
-                      className={`message-bubble ${
-                        isOwnMessage ? "sent-bubble" : "received-bubble"
-                      }`}
+                      key={msg.id || `${msg.timestamp}-${index}`}
+                      className={`message ${isOwnMessage ? "sent" : "received"}`}
                     >
-                      <p className="message-author">
-                        {isOwnMessage ? "Tú" : msg.senderId}
-                      </p>
-                      <p className="message-text">{msg.text}</p>
-                      <p
-                        className={`message-time ${
-                          isOwnMessage ? "sent-time" : "received-time"
+                      <div
+                        className={`message-bubble ${
+                          isOwnMessage ? "sent-bubble" : "received-bubble"
                         }`}
                       >
-                        {new Date(msg.timestamp).toLocaleTimeString("es-ES", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
+                        <p className="message-author">
+                          {isOwnMessage ? "Tú" : msg.senderId}
+                        </p>
+                        <p className="message-text">{msg.text}</p>
+                        <p
+                          className={`message-time ${
+                            isOwnMessage ? "sent-time" : "received-time"
+                          }`}
+                        >
+                          {new Date(msg.timestamp).toLocaleTimeString("es-ES", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })
-            )}
-            <div ref={messagesEndRef} />
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message Input */}
+            <form onSubmit={handleSendMessage} className="message-input-form">
+              <div className="input-container">
+                <input
+                  type="text"
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  placeholder="Escribe un mensaje..."
+                  disabled={!isConnected}
+                />
+                <button
+                  type="submit"
+                  disabled={!isConnected || !messageInput.trim()}
+                >
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </form>
           </div>
 
-          {/* Message Input */}
-          <form onSubmit={handleSendMessage} className="message-input-form">
-            <div className="input-container">
-              <input
-                type="text"
-                value={messageInput}
-                onChange={(e) => setMessageInput(e.target.value)}
-                placeholder="Escribe un mensaje..."
-                disabled={!isConnected}
-              />
-              <button
-                type="submit"
-                disabled={!isConnected || !messageInput.trim()}
-              >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                  />
-                </svg>
-              </button>
-            </div>
-          </form>
+          {/* Video Section */}
+          <div className="video-section">
+            <VideoCall />
+          </div>
         </div>
       </main>
 
