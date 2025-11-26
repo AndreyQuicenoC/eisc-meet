@@ -24,47 +24,57 @@ const VideoCall: React.FC = () => {
     // Configurar listeners de signaling socket
     const handleConnect = () => {
       setIsConnected(true);
-      console.log("✅ Conectado al servidor de signaling WebRTC");
+      console.log("%c✅ SIGNALING SOCKET CONNECTED", "color: green; font-weight: bold");
+      console.log("  Socket ID:", signalingSocket.id);
+      console.log("  Transport:", signalingSocket.io.engine.transport.name);
+      console.log("  URL:", signalingSocket.io.uri);
     };
 
     const handleDisconnect = () => {
       setIsConnected(false);
-      console.log("❌ Desconectado del servidor de signaling");
+      console.log("%c❌ SIGNALING SOCKET DISCONNECTED", "color: red; font-weight: bold");
     };
 
     const handleRoomFull = (data: { message: string }) => {
-      console.log("⚠️ Sala llena:", data.message);
+      console.log("%c⚠️ ROOM FULL", "color: orange; font-weight: bold", data.message);
       setRoomFull(true);
       alert(data.message);
       signalingSocket.disconnect();
     };
 
     const handleUserCount = (count: number) => {
-      console.log("👥 Usuarios online:", count);
+      console.log("%c👥 USER COUNT UPDATE", "color: blue; font-weight: bold");
+      console.log("  Users online:", count);
+      console.log("  Time:", new Date().toISOString());
       setUsersOnline(count);
     };
 
     const handleRemotePeerId = (peerId: string) => {
-      console.log("🆔 Peer ID remoto recibido:", peerId);
+      console.log("%c🆔 REMOTE PEER ID RECEIVED", "color: purple; font-weight: bold");
+      console.log("  Remote Peer ID:", peerId);
+      console.log("  My Peer ID:", myPeerIdRef.current);
       
       // Evitar procesar nuestro propio Peer ID
       if (peerId === myPeerIdRef.current) {
-        console.log("⚠️ Ignorando mi propio Peer ID");
+        console.log("%c⚠️ IGNORED - This is my own Peer ID", "color: orange");
         return;
       }
       
+      console.log("  Setting remote peer ID...");
       setRemotePeerId(peerId);
     };
 
     const handleUserDisconnected = () => {
-      console.log("👋 Usuario remoto desconectado");
+      console.log("%c👋 REMOTE USER DISCONNECTED", "color: orange; font-weight: bold");
       // Limpiar solo el peer remoto, no desconectar al usuario actual
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = null;
+        console.log("  Cleared remote video");
       }
       if (callRef.current) {
         callRef.current.close();
         callRef.current = null;
+        console.log("  Closed call");
       }
       setRemotePeerId(null);
       hasInitiatedCallRef.current = false;
@@ -160,94 +170,132 @@ const VideoCall: React.FC = () => {
   };
 
   const setupCallHandlers = (call: any) => {
-    console.log("📝 Configurando handlers para la llamada con:", call.peer);
+    console.log("%c🎯 SETTING UP CALL HANDLERS", "color: cyan; font-weight: bold");
+    console.log("  For Peer ID:", call.peer);
+    console.log("  Time:", new Date().toISOString());
     
     call.on("stream", async (remoteStream: MediaStream) => {
-      console.log("📹 Stream remoto recibido de:", call.peer);
+      console.log("%c🎬 REMOTE STREAM RECEIVED", "color: green; font-size: 14px; font-weight: bold");
+      console.log("  From Peer ID:", call.peer);
+      console.log("  Time:", new Date().toISOString());
+      
       logStreamInfo(remoteStream, "remoto recibido");
       
       if (remoteVideoRef.current) {
         // Clear any existing stream first
         if (remoteVideoRef.current.srcObject) {
           const oldStream = remoteVideoRef.current.srcObject as MediaStream;
+          console.log("  🛑 Stopping old stream tracks...");
           oldStream.getTracks().forEach(track => {
-            console.log("🛑 Deteniendo track antiguo:", track.kind);
+            console.log("    - Stopping", track.kind, "track");
             track.stop();
           });
+          console.log("  ✅ Old stream tracks stopped");
         }
         
-        console.log("🔗 Asignando stream remoto al elemento video");
+        console.log("  🔗 Setting remote stream to video element...");
         remoteVideoRef.current.srcObject = remoteStream;
         
         // Force video attributes
         remoteVideoRef.current.muted = false;
         remoteVideoRef.current.volume = 1.0;
+        console.log("  🔊 Video attributes set (muted=false, volume=1.0)");
         
         // Wait for metadata to load
+        console.log("  ⏳ Waiting for video metadata...");
         await new Promise((resolve) => {
           remoteVideoRef.current!.onloadedmetadata = () => {
-            console.log("✅ Metadata del video remoto cargada");
-            console.log("   - Video dimensions:", remoteVideoRef.current!.videoWidth, "x", remoteVideoRef.current!.videoHeight);
+            console.log("  ✅ Video metadata loaded");
+            console.log("    - Dimensions:", remoteVideoRef.current!.videoWidth, "x", remoteVideoRef.current!.videoHeight);
+            console.log("    - Duration:", remoteVideoRef.current!.duration);
+            console.log("    - Ready state:", remoteVideoRef.current!.readyState);
             resolve(true);
           };
           
           // Timeout de seguridad
           setTimeout(() => {
-            console.log("⏰ Timeout esperando metadata, intentando reproducir de todos modos");
+            console.warn("  ⏰ Metadata timeout after 2s, proceeding anyway");
             resolve(false);
           }, 2000);
         });
         
         try {
-          console.log("▶️ Intentando reproducir video remoto...");
+          console.log("  ▶️ Attempting to play remote video...");
           await remoteVideoRef.current.play();
-          console.log("✅ Video remoto reproduciéndose correctamente");
+          console.log("%c  ✅ REMOTE VIDEO PLAYING", "color: green; font-weight: bold");
         } catch (err: any) {
-          console.error("❌ Error reproduciendo video remoto:", err.name, err.message);
+          console.error("%c  ❌ ERROR PLAYING REMOTE VIDEO", "color: red; font-weight: bold");
+          console.error("    Error name:", err.name);
+          console.error("    Error message:", err.message);
+          console.error("    Full error:", err);
           
           // Try with user interaction
           const playWithInteraction = () => {
-            console.log("🖱️ Intentando reproducir con interacción del usuario");
+            console.log("  🖱️ Attempting to play with user interaction...");
             remoteVideoRef.current?.play()
               .then(() => {
-                console.log("✅ Video remoto reproduciéndose después de interacción");
+                console.log("  ✅ Remote video playing after user interaction");
                 document.removeEventListener('click', playWithInteraction);
               })
-              .catch(retryErr => console.error("❌ Error en retry:", retryErr));
+              .catch(retryErr => {
+                console.error("  ❌ Retry failed:", retryErr);
+              });
           };
           
           // Add click listener to retry play on user interaction
           document.addEventListener('click', playWithInteraction, { once: true });
-          console.log("👆 Esperando click del usuario para reproducir video");
+          console.log("  👆 Waiting for user click to play video");
         }
       } else {
-        console.error("❌ remoteVideoRef.current es null!");
+        console.error("%c  ❌ remoteVideoRef.current is null!", "color: red; font-weight: bold");
+        console.error("    Cannot display remote video - ref not available");
       }
     });
 
     call.on("close", () => {
-      console.log("📞 Llamada cerrada por el otro usuario");
+      console.log("%c📞 CALL CLOSED", "color: red; font-weight: bold");
+      console.log("  By remote peer:", call.peer);
+      console.log("  Time:", new Date().toISOString());
+      
       if (remoteVideoRef.current) {
+        console.log("  Clearing remote video element...");
         remoteVideoRef.current.srcObject = null;
       }
       callRef.current = null;
       hasInitiatedCallRef.current = false;
+      console.log("  ✅ Call references cleared");
     });
 
     call.on("error", (err: Error) => {
-      console.error("❌ Error en la llamada:", err);
+      console.error("%c❌ CALL ERROR", "color: red; font-weight: bold");
+      console.error("  Peer ID:", call.peer);
+      console.error("  Error:", err.message);
+      console.error("  Full error:", err);
+      console.error("  Time:", new Date().toISOString());
+      
       hasInitiatedCallRef.current = false;
+      console.log("  Reset hasInitiatedCallRef to false");
     });
+    
+    console.log("  ✅ All call handlers configured");
   };
 
   const connectSignalingServer = (): Promise<void> => {
+    console.log("%c🔌 CONNECTING TO SIGNALING SERVER", "color: purple; font-weight: bold");
+    console.log("  Time:", new Date().toISOString());
+    console.log("  Server URL:", SIGNALING_SERVER_URL);
+    console.log("  Room ID:", roomId);
+    
     return new Promise((resolve, reject) => {
       if (signalingSocket.connected) {
+        console.log("  ℹ️ Already connected, resolving immediately");
         resolve();
         return;
       }
 
+      console.log("  ⏳ Setting up connection handlers...");
       const timeout = setTimeout(() => {
+        console.error("  ❌ Connection timeout after 10s");
         reject(new Error("Timeout conectando al servidor de signaling"));
       }, 10000);
 
@@ -259,16 +307,25 @@ const VideoCall: React.FC = () => {
       };
 
       const onConnect = () => {
+        console.log("%c  ✅ CONNECTED TO SIGNALING SERVER", "color: green; font-weight: bold");
+        console.log("    Socket ID:", signalingSocket.id);
+        console.log("    Time:", new Date().toISOString());
         cleanup();
         resolve();
       };
 
       const onRoomFull = () => {
+        console.error("%c  ❌ ROOM IS FULL", "color: red; font-weight: bold");
+        console.log("    Time:", new Date().toISOString());
         cleanup();
         reject(new Error("Sala llena"));
       };
 
       const onError = (error: Error) => {
+        console.error("%c  ❌ CONNECTION ERROR", "color: red; font-weight: bold");
+        console.error("    Error:", error.message);
+        console.error("    Full error:", error);
+        console.error("    Time:", new Date().toISOString());
         cleanup();
         reject(new Error("Error de conexión: " + error.message));
       };
@@ -277,12 +334,21 @@ const VideoCall: React.FC = () => {
       signalingSocket.once("roomFull", onRoomFull);
       signalingSocket.once("connect_error", onError);
 
+      console.log("  📡 Initiating connection...");
       signalingSocket.connect();
     });
   };
 
   const getMediaStream = async (): Promise<MediaStream> => {
+    console.log("%c🎥 GETTING MEDIA STREAM", "color: blue; font-weight: bold");
+    console.log("  Time:", new Date().toISOString());
+    console.log("  Requesting permissions...");
+    
     try {
+      console.log("  📹 Attempting video + audio...");
+      console.log("    Video constraints: 1280x720 (ideal)");
+      console.log("    Audio: echoCancellation, noiseSuppression, autoGainControl");
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -295,14 +361,18 @@ const VideoCall: React.FC = () => {
         },
       });
       
+      console.log("%c  ✅ VIDEO + AUDIO STREAM OBTAINED", "color: green; font-weight: bold");
       logStreamInfo(stream, "local obtenido");
       return stream;
       
-    } catch (videoError) {
-      console.error("❌ Error con video:", videoError);
+    } catch (videoError: any) {
+      console.error("%c  ❌ VIDEO ACCESS ERROR", "color: red; font-weight: bold");
+      console.error("    Error name:", videoError.name);
+      console.error("    Error message:", videoError.message);
+      console.error("    Full error:", videoError);
       
       try {
-        console.log("🔊 Intentando solo con audio...");
+        console.log("  🔊 FALLBACK: Attempting audio only...");
         const audioStream = await navigator.mediaDevices.getUserMedia({
           video: false,
           audio: {
@@ -312,17 +382,26 @@ const VideoCall: React.FC = () => {
           },
         });
         
+        console.log("%c  ✅ AUDIO-ONLY STREAM OBTAINED", "color: yellow; font-weight: bold");
         alert("No se pudo acceder a la cámara. La llamada continuará solo con audio.");
         logStreamInfo(audioStream, "local (solo audio)");
         return audioStream;
         
-      } catch (audioError) {
+      } catch (audioError: any) {
+        console.error("%c  ❌ AUDIO ACCESS ERROR", "color: red; font-weight: bold");
+        console.error("    Error name:", audioError.name);
+        console.error("    Error message:", audioError.message);
+        console.error("    Full error:", audioError);
         throw new Error("No se pudo acceder a la cámara ni al micrófono. Verifica los permisos.");
       }
     }
   };
 
   const setupPeerConnection = (stream: MediaStream) => {
+    console.log("%c🔧 SETTING UP PEER CONNECTION", "color: purple; font-weight: bold");
+    console.log("  Time:", new Date().toISOString());
+    console.log("  ICE Servers configured:", 5);
+    
     const peer = new Peer({
       debug: 2,
       config: {
@@ -340,70 +419,102 @@ const VideoCall: React.FC = () => {
     });
 
     peer.on("open", (id) => {
-      console.log("🆔 Mi Peer ID:", id);
+      console.log("%c✅ PEER OPENED", "color: green; font-weight: bold");
+      console.log("  🆔 My Peer ID:", id);
+      console.log("  Time:", new Date().toISOString());
+      console.log("  Registering with signaling server...");
+      
       myPeerIdRef.current = id;
       signalingSocket.emit("registerPeerId", id);
+      
+      console.log("  ✅ Peer ID registered");
     });
 
     peer.on("call", (call) => {
-      console.log("📞 Llamada entrante de:", call.peer);
+      console.log("%c📞 INCOMING CALL", "color: orange; font-weight: bold");
+      console.log("  From Peer ID:", call.peer);
+      console.log("  My Peer ID:", myPeerIdRef.current);
+      console.log("  Time:", new Date().toISOString());
+      
       logStreamInfo(stream, "local para responder");
       
       // Answer with local stream
+      console.log("  Answering call with local stream...");
       call.answer(stream);
-      console.log("✅ Llamada respondida con stream local");
+      console.log("  ✅ Call answered");
       
       // Only set callRef if we don't have one already
       if (!callRef.current) {
         callRef.current = call;
         hasInitiatedCallRef.current = true;
-        console.log("📝 CallRef establecido para llamada entrante");
+        console.log("  📝 CallRef set for incoming call");
+      } else {
+        console.log("  ℹ️ CallRef already exists, not overwriting");
       }
       
       // Setup handlers for this call
+      console.log("  Setting up call handlers...");
       setupCallHandlers(call);
     });
 
     peer.on("error", (err) => {
-      console.error("❌ Error en Peer:", err);
+      console.error("%c❌ PEER ERROR", "color: red; font-weight: bold");
+      console.error("  Error type:", err.type);
+      console.error("  Error message:", err.message);
+      console.error("  Full error:", err);
+      console.error("  Time:", new Date().toISOString());
+      
       if (err.type === "peer-unavailable") {
-        console.log("⚠️ Peer no disponible, esperando...");
+        console.log("  ⚠️ Peer unavailable, will wait...");
       } else {
         alert("Error en conexión Peer: " + err.message);
       }
     });
 
     peer.on("disconnected", () => {
-      console.log("⚠️ Peer desconectado");
+      console.warn("%c⚠️ PEER DISCONNECTED", "color: orange; font-weight: bold");
+      console.log("  My Peer ID:", myPeerIdRef.current);
+      console.log("  Time:", new Date().toISOString());
+      console.log("  ℹ️ NOT auto-reconnecting (to avoid issues)");
       // NO reconectar automáticamente, causa problemas
     });
 
     peer.on("close", () => {
-      console.log("🔒 Peer cerrado");
+      console.log("%c🔒 PEER CLOSED", "color: red; font-weight: bold");
+      console.log("  My Peer ID:", myPeerIdRef.current);
+      console.log("  Time:", new Date().toISOString());
     });
 
+    console.log("  ✅ Peer connection setup complete, waiting for events...");
     return peer;
   };
 
   const startCall = async () => {
     try {
+      console.log("%c🚀 STARTING CALL", "color: green; font-size: 16px; font-weight: bold");
+      console.log("  Time:", new Date().toISOString());
+      console.log("  Room full status:", roomFull);
+      
       if (roomFull) {
         alert("La sala está llena. Solo se permiten 2 usuarios.");
         return;
       }
 
-      console.log("🚀 Iniciando llamada...");
-
       // 1. Conectar al servidor de signaling
+      console.log("%c📡 STEP 1: Connecting to signaling server", "color: blue; font-weight: bold");
       await connectSignalingServer();
-      console.log("✅ Conectado al servidor de signaling");
+      console.log("  ✅ Connected to signaling server");
 
       // 2. Obtener stream de media
-      console.log("📹 Solicitando acceso a cámara y micrófono...");
+      console.log("%c📹 STEP 2: Requesting media stream", "color: blue; font-weight: bold");
       const stream = await getMediaStream();
       localStreamRef.current = stream;
+      console.log("  ✅ Media stream obtained");
+      console.log("  Video tracks:", stream.getVideoTracks().length);
+      console.log("  Audio tracks:", stream.getAudioTracks().length);
 
       // 3. Mostrar video local
+      console.log("%c🎥 STEP 3: Setting up local video", "color: blue; font-weight: bold");
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
         
@@ -412,22 +523,27 @@ const VideoCall: React.FC = () => {
         
         try {
           await localVideoRef.current.play();
-          console.log("✅ Video local reproduciéndose correctamente");
+          console.log("  ✅ Local video playing");
         } catch (err: any) {
-          console.error("❌ Error reproduciendo video local:", err);
-          // El video local con muted normalmente no debería fallar
+          console.error("  ❌ Error playing local video:", err);
         }
+      } else {
+        console.error("  ❌ localVideoRef.current is null!");
       }
 
       // 4. Configurar PeerJS
+      console.log("%c🔗 STEP 4: Setting up PeerJS", "color: blue; font-weight: bold");
       const peer = setupPeerConnection(stream);
       peerRef.current = peer;
 
       setIsCallActive(true);
-      console.log("✅ Llamada iniciada exitosamente");
+      console.log("%c✅ CALL STARTED SUCCESSFULLY", "color: green; font-size: 16px; font-weight: bold");
+      console.log("  Waiting for Peer ID...");
 
     } catch (error: any) {
-      console.error("❌ Error en startCall:", error);
+      console.error("%c❌ ERROR STARTING CALL", "color: red; font-size: 16px; font-weight: bold");
+      console.error("  Error:", error.message);
+      console.error("  Stack:", error.stack);
       alert("Error al iniciar la llamada: " + error.message);
       
       // Cleanup en caso de error
@@ -492,8 +608,15 @@ const VideoCall: React.FC = () => {
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         setIsMuted(!audioTrack.enabled);
-        console.log(`🔊 Audio ${audioTrack.enabled ? "activado" : "desactivado"}`);
+        console.log("%c🔊 AUDIO TOGGLED", "color: cyan; font-weight: bold");
+        console.log("  Status:", audioTrack.enabled ? "ENABLED" : "MUTED");
+        console.log("  Track ID:", audioTrack.id);
+        console.log("  Track state:", audioTrack.readyState);
+      } else {
+        console.log("%c⚠️ NO AUDIO TRACK", "color: orange; font-weight: bold");
       }
+    } else {
+      console.log("%c⚠️ NO LOCAL STREAM", "color: orange; font-weight: bold");
     }
   };
 
@@ -503,8 +626,15 @@ const VideoCall: React.FC = () => {
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
         setIsVideoEnabled(videoTrack.enabled);
-        console.log(`📹 Video ${videoTrack.enabled ? "activado" : "desactivado"}`);
+        console.log("%c📹 VIDEO TOGGLED", "color: magenta; font-weight: bold");
+        console.log("  Status:", videoTrack.enabled ? "ENABLED" : "DISABLED");
+        console.log("  Track ID:", videoTrack.id);
+        console.log("  Track state:", videoTrack.readyState);
+      } else {
+        console.log("%c⚠️ NO VIDEO TRACK", "color: orange; font-weight: bold");
       }
+    } else {
+      console.log("%c⚠️ NO LOCAL STREAM", "color: orange; font-weight: bold");
     }
   };
 
