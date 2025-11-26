@@ -13,19 +13,25 @@
     flex: 1;
     background: linear-gradient(135deg, #ecfeff 0%, #cffafe 50%, #e0f2fe 100%);
     padding: 1.5rem;
+    padding-bottom: 120px; // Extra padding to prevent content from going under footer
+    min-height: calc(100vh - 4.5rem - 80px); // Adjust for navbar and footer
 
     @media (max-width: 768px) {
       padding: 1rem;
+      padding-bottom: 100px;
+      min-height: calc(100vh - 4rem - 70px);
     }
 
     @media (max-width: 480px) {
       padding: 0.75rem;
+      padding-bottom: 90px;
+      min-height: calc(100vh - 4rem - 60px);
     }
 
     .chat-video-container {
       max-width: 1920px;
       margin: 0 auto;
-      height: calc(100vh - 7rem);
+      height: calc(100vh - 7rem - 120px); // Subtract navbar + footer space
       display: grid;
       grid-template-columns: 30% 70%;
       gap: 1.5rem;
@@ -33,6 +39,7 @@
       @media (max-width: 1400px) {
         grid-template-columns: 35% 65%;
         gap: 1.25rem;
+        height: calc(100vh - 7rem - 100px);
       }
 
       @media (max-width: 1200px) {
@@ -40,16 +47,19 @@
         grid-template-rows: 50vh auto;
         height: auto;
         gap: 1rem;
+        min-height: calc(100vh - 7rem - 100px);
       }
 
       @media (max-width: 768px) {
         grid-template-rows: 45vh auto;
         gap: 0.75rem;
+        min-height: calc(100vh - 7rem - 90px);
       }
 
       @media (max-width: 480px) {
         grid-template-rows: 40vh auto;
         gap: 0.5rem;
+        min-height: calc(100vh - 7rem - 80px);
       }
     }
 

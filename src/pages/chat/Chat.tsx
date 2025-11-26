@@ -134,7 +134,7 @@ const Chat: React.FC = () => {
 
       const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      
+
       // Mark as user scrolling if not near bottom
       if (!isNearBottom) {
         isUserScrollingRef.current = true;
@@ -148,9 +148,9 @@ const Chat: React.FC = () => {
       }, 1000);
     };
 
-    messagesContainer.addEventListener('scroll', handleScroll);
+    messagesContainer.addEventListener("scroll", handleScroll);
     return () => {
-      messagesContainer.removeEventListener('scroll', handleScroll);
+      messagesContainer.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -160,7 +160,7 @@ const Chat: React.FC = () => {
       const container = messagesContainerRef.current;
       container.scrollTo({
         top: container.scrollHeight,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
     }
   }, [messages]);
@@ -184,10 +184,10 @@ const Chat: React.FC = () => {
     try {
       // Desconectar socket antes de cerrar sesión
       socket.disconnect();
-      
+
       // Cerrar sesión en Firebase
       await useAuthStore.getState().logout();
-      
+
       // Navegar al login
       navigate("/login");
     } catch (error) {
@@ -314,7 +314,9 @@ const Chat: React.FC = () => {
                   return (
                     <div
                       key={msg.id || `${msg.timestamp}-${index}`}
-                      className={`message ${isOwnMessage ? "sent" : "received"}`}
+                      className={`message ${
+                        isOwnMessage ? "sent" : "received"
+                      }`}
                     >
                       <div
                         className={`message-bubble ${

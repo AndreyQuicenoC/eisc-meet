@@ -97,12 +97,27 @@ const VideoCall: React.FC = () => {
       hasInitiatedCallRef.current = false;
     };
 
+    const handleMediaToggle = (data: { type: "audio" | "video"; enabled: boolean; peerId: string }) => {
+      console.log(
+        "%c🔄 REMOTE MEDIA TOGGLE",
+        "color: purple; font-weight: bold"
+      );
+      console.log("  Type:", data.type.toUpperCase());
+      console.log("  Enabled:", data.enabled ? "✅ ON" : "❌ OFF");
+      console.log("  From Peer:", data.peerId);
+      console.log("  Time:", new Date().toISOString());
+      
+      // This info is already reflected in the track events, but logging helps debugging
+      console.log("  ℹ️ Remote user toggled their", data.type);
+    };
+
     signalingSocket.on("connect", handleConnect);
     signalingSocket.on("disconnect", handleDisconnect);
     signalingSocket.on("roomFull", handleRoomFull);
     signalingSocket.on("userCount", handleUserCount);
     signalingSocket.on("remotePeerId", handleRemotePeerId);
     signalingSocket.on("userDisconnected", handleUserDisconnected);
+    signalingSocket.on("mediaToggle", handleMediaToggle);
 
     return () => {
       signalingSocket.off("connect", handleConnect);
@@ -111,6 +126,7 @@ const VideoCall: React.FC = () => {
       signalingSocket.off("userCount", handleUserCount);
       signalingSocket.off("remotePeerId", handleRemotePeerId);
       signalingSocket.off("userDisconnected", handleUserDisconnected);
+      signalingSocket.off("mediaToggle", handleMediaToggle);
 
       // Cleanup solo si el componente se desmonta
       cleanupCall();
@@ -207,6 +223,31 @@ const VideoCall: React.FC = () => {
       console.log("  Time:", new Date().toISOString());
 
       logStreamInfo(remoteStream, "remoto recibido");
+
+      // Setup track event listeners for remote stream
+      console.log("  🎧 Setting up track event listeners...");
+      remoteStream.getTracks().forEach((track) => {
+        console.log(`    - Setting up listeners for ${track.kind} track`);
+        
+        track.onended = () => {
+          console.log(`%c📴 REMOTE ${track.kind.toUpperCase()} TRACK ENDED`, "color: red; font-weight: bold");
+          console.log("  Track ID:", track.id);
+          console.log("  Time:", new Date().toISOString());
+        };
+        
+        track.onmute = () => {
+          console.log(`%c🔇 REMOTE ${track.kind.toUpperCase()} TRACK MUTED`, "color: orange; font-weight: bold");
+          console.log("  Track ID:", track.id);
+          console.log("  Time:", new Date().toISOString());
+        };
+        
+        track.onunmute = () => {
+          console.log(`%c🔊 REMOTE ${track.kind.toUpperCase()} TRACK UNMUTED`, "color: green; font-weight: bold");
+          console.log("  Track ID:", track.id);
+          console.log("  Time:", new Date().toISOString());
+        };
+      });
+      console.log("  ✅ Track event listeners configured");
 
       if (remoteVideoRef.current) {
         // Clear any existing stream first
@@ -706,9 +747,20 @@ const VideoCall: React.FC = () => {
         audioTrack.enabled = !audioTrack.enabled;
         setIsMuted(!audioTrack.enabled);
         console.log("%c🔊 AUDIO TOGGLED", "color: cyan; font-weight: bold");
-        console.log("  Status:", audioTrack.enabled ? "ENABLED" : "MUTED");
+        console.log("  Status:", audioTrack.enabled ? "ENABLED ✅" : "MUTED 🔇");
         console.log("  Track ID:", audioTrack.id);
         console.log("  Track state:", audioTrack.readyState);
+        console.log("  Time:", new Date().toISOString());
+        
+        // Notify signaling server about audio toggle
+        if (signalingSocket.connected) {
+          console.log("  📤 Notifying signaling server about audio change");
+          signalingSocket.emit("mediaToggle", {
+            type: "audio",
+            enabled: audioTrack.enabled,
+            peerId: myPeerIdRef.current
+          });
+        }
       } else {
         console.log("%c⚠️ NO AUDIO TRACK", "color: orange; font-weight: bold");
       }
@@ -724,9 +776,20 @@ const VideoCall: React.FC = () => {
         videoTrack.enabled = !videoTrack.enabled;
         setIsVideoEnabled(videoTrack.enabled);
         console.log("%c📹 VIDEO TOGGLED", "color: magenta; font-weight: bold");
-        console.log("  Status:", videoTrack.enabled ? "ENABLED" : "DISABLED");
+        console.log("  Status:", videoTrack.enabled ? "ENABLED ✅" : "DISABLED 📴");
         console.log("  Track ID:", videoTrack.id);
         console.log("  Track state:", videoTrack.readyState);
+        console.log("  Time:", new Date().toISOString());
+        
+        // Notify signaling server about video toggle
+        if (signalingSocket.connected) {
+          console.log("  📤 Notifying signaling server about video change");
+          signalingSocket.emit("mediaToggle", {
+            type: "video",
+            enabled: videoTrack.enabled,
+            peerId: myPeerIdRef.current
+          });
+        }
       } else {
         console.log("%c⚠️ NO VIDEO TRACK", "color: orange; font-weight: bold");
       }
