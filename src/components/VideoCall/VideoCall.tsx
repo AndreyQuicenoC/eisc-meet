@@ -280,7 +280,7 @@ const VideoCall: React.FC = () => {
     const peer = new Peer({
       host: "eisc-video-3ee1ac20d78b.herokuapp.com",
       port: 443,
-      path: "/peerjs",
+      path: "/",
       secure: true,
       debug: 2,
       config: {
