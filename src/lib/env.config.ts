@@ -10,7 +10,7 @@
 
 // ✅ FIXED PRODUCTION URLs for Render.com
 export const CHAT_URL = 'https://eisc-chat.onrender.com';
-export const SIGNALING_URL = 'https://eisc-video.onrender.com';
+export const SIGNALING_URL = 'https://eisc-video-production.up.railway.app';
 
 // For backwards compatibility
 export const SOCKET_URL = CHAT_URL;
