@@ -3,20 +3,20 @@ import { io, Socket } from "socket.io-client";
 /**
  * WebRTC Signaling Socket Configuration
  * 
- * Connects to: https://eisc-video-production.up.railway.app
+ * Connects to: https://eisc-video-3ee1ac20d78b.herokuapp.com
  * 
  * ✅ FIXED URL - No dynamic logic
- * ✅ WebSocket transport preferred
+ * ✅ Polling + WebSocket for Heroku compatibility
  * ✅ Auto-reconnection enabled
  */
 
-export const signalingSocket: Socket = io("https://eisc-video-production.up.railway.app", {
+export const signalingSocket: Socket = io("https://eisc-video-3ee1ac20d78b.herokuapp.com", {
   autoConnect: false,
-  transports: ["websocket", "polling"],
+  transports: ["polling", "websocket"],
   reconnection: true,
   reconnectionDelay: 1000,
   reconnectionAttempts: 5,
 });
 
-console.log('📡 WebRTC Signaling Socket initialized for: https://eisc-video-production.up.railway.app');
+console.log('📡 WebRTC Signaling Socket initialized for: https://eisc-video-3ee1ac20d78b.herokuapp.com');
 

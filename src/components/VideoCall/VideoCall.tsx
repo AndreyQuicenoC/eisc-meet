@@ -278,7 +278,7 @@ const VideoCall: React.FC = () => {
     console.log(`  📍 Path: /peerjs`);
 
     const peer = new Peer({
-      host: "eisc-video-production.up.railway.app",
+      host: "eisc-video-3ee1ac20d78b.herokuapp.com",
       port: 443,
       path: "/peerjs",
       secure: true,
