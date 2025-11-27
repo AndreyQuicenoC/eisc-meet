@@ -39,6 +39,9 @@ const VideoCall: React.FC = () => {
   const hasInitiatedCallRef = useRef(false);
   const isPeerReadyRef = useRef(false);
   const pendingRemotePeerIdRef = useRef<string | null>(null);
+  
+  // FIX HEROKU: Track attached stream ID to prevent duplicates
+  const attachedStreamIdRef = useRef<string | null>(null);
 
   // ============ HELPERS ============
   const logStreamInfo = useCallback((stream: MediaStream, label: string) => {
@@ -67,6 +70,12 @@ const VideoCall: React.FC = () => {
   const attachRemoteStream = useCallback(async (stream: MediaStream, fromPeerId: string) => {
     console.log("%c🎬 ATTACHING REMOTE STREAM", "color: green; font-size: 14px; font-weight: bold");
     console.log(`  From Peer: ${fromPeerId}`);
+    
+    // FIX HEROKU: Prevent duplicate stream attachment
+    if (attachedStreamIdRef.current === stream.id) {
+      console.log("  ℹ️ Stream already attached (ID: " + stream.id.substring(0, 8) + "), skipping duplicate");
+      return;
+    }
     
     logStreamInfo(stream, `remoto de ${fromPeerId.substring(0, 8)}`);
 
@@ -103,6 +112,9 @@ const VideoCall: React.FC = () => {
     remoteVideoRef.current.srcObject = stream;
     remoteVideoRef.current.muted = false;
     remoteVideoRef.current.volume = 1.0;
+    
+    // FIX HEROKU: Mark stream as attached
+    attachedStreamIdRef.current = stream.id;
 
     // Wait for metadata with timeout
     await Promise.race([
@@ -164,6 +176,9 @@ const VideoCall: React.FC = () => {
     call.on("close", () => {
       console.log("%c📞 CALL CLOSED", "color: red; font-weight: bold");
       console.log(`  From Peer: ${call.peer}`);
+      
+      // FIX HEROKU: Clear attached stream flag
+      attachedStreamIdRef.current = null;
       
       if (remoteVideoRef.current) {
         const stream = remoteVideoRef.current.srcObject as MediaStream;
@@ -246,6 +261,19 @@ const VideoCall: React.FC = () => {
     console.log(`  From Peer: ${call.peer}`);
     console.log(`  My Peer: ${myPeerIdRef.current}`);
 
+    // FIX HEROKU: Prevent answering our own outgoing call
+    if (call.peer === myPeerIdRef.current) {
+      console.log("  ⚠️ This is my own call, ignoring");
+      return;
+    }
+
+    // FIX HEROKU: If we already have a call, reject the new one
+    if (callRef.current && callRef.current !== call) {
+      console.log("  ⚠️ Already in a call, rejecting new incoming call");
+      call.close();
+      return;
+    }
+
     if (!localStreamRef.current) {
       console.error("  ❌ No local stream to answer with");
       return;
@@ -261,11 +289,10 @@ const VideoCall: React.FC = () => {
       callRef.current = call;
       hasInitiatedCallRef.current = true;
       console.log("  ✅ Call answered and stored");
+      setupCallHandlers(call);
     } else {
-      console.log("  ℹ️ Already have a call, not overwriting");
+      console.log("  ℹ️ Already have this call stored");
     }
-
-    setupCallHandlers(call);
   }, [logStreamInfo, setupCallHandlers]);
 
   // ============ SETUP PEER CONNECTION ============
@@ -281,7 +308,7 @@ const VideoCall: React.FC = () => {
       port: 443,
       path: "/peerjs",
       secure: true,
-      debug: 2,
+      debug: 1, // FIX HEROKU: Reduce debug spam (1 = errors only, 2 = warnings, 3 = all)
       
       // FIX HEROKU: WebRTC configuration for best Heroku compatibility
       config: {
@@ -402,6 +429,9 @@ const VideoCall: React.FC = () => {
 
     const handleUserDisconnected = () => {
       console.log("%c👋 REMOTE USER DISCONNECTED", "color: orange; font-weight: bold");
+      
+      // FIX HEROKU: Clear attached stream flag
+      attachedStreamIdRef.current = null;
       
       if (remoteVideoRef.current) {
         const stream = remoteVideoRef.current.srcObject as MediaStream;
@@ -622,6 +652,7 @@ const VideoCall: React.FC = () => {
     isPeerReadyRef.current = false;
     myPeerIdRef.current = null;
     pendingRemotePeerIdRef.current = null;
+    attachedStreamIdRef.current = null; // FIX HEROKU: Clear attached stream flag
 
     // Disconnect from signaling
     if (signalingSocket.connected) {
