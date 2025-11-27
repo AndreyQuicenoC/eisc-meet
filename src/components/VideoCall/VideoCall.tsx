@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Peer, { MediaConnection } from "peerjs";
 import { signalingSocket } from "../../lib/webrtc.config";
-import { SIGNALING_URL } from "../../lib/env.config";
 import "./VideoCall.scss";
 
 /**
@@ -273,18 +272,16 @@ const VideoCall: React.FC = () => {
   const setupPeer = useCallback(() => {
     console.log("%c🔧 SETTING UP PEER", "color: purple; font-weight: bold");
 
-    const url = new URL(SIGNALING_URL);
-    const host = url.hostname;
-    const port = parseInt(url.port) || (url.protocol === "https:" ? 443 : 80);
-    const secure = url.protocol === "https:";
-
-    console.log(`  Host: ${host}:${port} (secure: ${secure})`);
+    // ✅ FIXED CONFIGURATION FOR PRODUCTION - Render Backend
+    // PeerJS must connect to the PeerServer at eisc-video.onrender.com/peerjs
+    console.log(`  🌐 Connecting to PeerServer: eisc-video.onrender.com:443 (secure: true)`);
+    console.log(`  📍 Path: /peerjs`);
 
     const peer = new Peer({
-      host,
-      port,
+      host: "eisc-video.onrender.com",
+      port: 443,
       path: "/peerjs",
-      secure,
+      secure: true,
       debug: 2,
       config: {
         iceServers: [
