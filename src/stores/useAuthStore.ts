@@ -45,16 +45,18 @@ const useAuthStore = create<AuthStore>()((set) => ({
     loginWithGoogle: async () => {
         try {
             await signInWithPopup(auth, googleProvider);
-        } catch (e: any) {
-            console.error(e);
+        } catch (e: unknown) {
+            const error = e instanceof Error ? e : new Error(String(e));
+            console.error("Error logging in with Google:", error.message);
         }
     },
 
     logout: async () => {
         try {
             await signOut(auth);
-        } catch (e: any) {
-            console.error(e);
+        } catch (e: unknown) {
+            const error = e instanceof Error ? e : new Error(String(e));
+            console.error("Error logging out:", error.message);
         }
     },
 }))

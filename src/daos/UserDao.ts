@@ -50,9 +50,10 @@ class UserDAO {
                 return { success: false, data: null };
             }
             return { success: true, data: snap.data() };
-        } catch (err: any) {
-            console.error("Error getting document:", err);
-            return { success: false, data: null, error: err?.message };
+        } catch (err: unknown) {
+            const error = err instanceof Error ? err : new Error(String(err));
+            console.error("Error getting document:", error.message);
+            return { success: false, data: null, error: error.message };
         }
     }
 
@@ -68,9 +69,10 @@ class UserDAO {
             } as User);
             console.log("Document written with ID:", docRef.id);
             return { success: true, id: docRef.id };
-        } catch (err: any) {
-            console.error("Error adding document:", err);
-            return { success: false, error: err?.message ?? "Unknown error" };
+        } catch (err: unknown) {
+            const error = err instanceof Error ? err : new Error(String(err));
+            console.error("Error adding document:", error.message);
+            return { success: false, error: error.message };
         }
     }
 
@@ -86,9 +88,10 @@ class UserDAO {
             } as Partial<User>);
             console.log("Document successfully updated!");
             return { success: true };
-        } catch (err: any) {
-            console.error("Error updating document:", err);
-            return { success: false, error: err?.message ?? "Unknown error" };
+        } catch (err: unknown) {
+            const error = err instanceof Error ? err : new Error(String(err));
+            console.error("Error updating document:", error.message);
+            return { success: false, error: error.message };
         }
     }
 
@@ -100,9 +103,10 @@ class UserDAO {
             await deleteDoc(doc(this.collectionRef, id));
             console.log("Document successfully deleted!");
             return { success: true };
-        } catch (err: any) {
-            console.error("Error removing document:", err);
-            return { success: false, error: err?.message ?? "Unknown error" };
+        } catch (err: unknown) {
+            const error = err instanceof Error ? err : new Error(String(err));
+            console.error("Error removing document:", error.message);
+            return { success: false, error: error.message };
         }
     }
 }

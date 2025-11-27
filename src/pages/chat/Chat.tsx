@@ -117,8 +117,9 @@ const Chat: React.FC = () => {
         setMessages(data.messages);
         console.log("✅ Historial cargado:", data.messages.length, "mensajes");
       }
-    } catch (error) {
-      console.error("❌ Error cargando historial:", error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      console.error("❌ Error cargando historial:", err.message);
     }
   };
 
@@ -190,8 +191,9 @@ const Chat: React.FC = () => {
 
       // Navegar al login
       navigate("/login");
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      console.error("Error al cerrar sesión:", err.message);
     }
   };
 

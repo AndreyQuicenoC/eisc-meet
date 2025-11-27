@@ -28,8 +28,9 @@ const Navbar: React.FC<NavbarProps> = ({
       
       // Navegar al login
       navigate("/login");
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      console.error("Error al cerrar sesión:", err.message);
     }
   };
 

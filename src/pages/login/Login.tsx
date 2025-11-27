@@ -21,14 +21,15 @@ const Login: React.FC = () => {
     e.preventDefault();
     try {
       await loginWithGoogle();
-    } catch (error) {
-      console.error("Error en login:", error);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      console.error("Error en login:", err.message);
     }
   };
 
   const handleRegister = (e: React.MouseEvent) => {
     e.preventDefault();
-    handleLoginGoogle(e as any);
+    handleLoginGoogle(e as unknown as React.FormEvent);
   };
 
   return (
