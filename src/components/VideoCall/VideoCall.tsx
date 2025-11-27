@@ -272,8 +272,7 @@ const VideoCall: React.FC = () => {
   const setupPeer = useCallback(() => {
     console.log("%c🔧 SETTING UP PEER", "color: purple; font-weight: bold");
 
-    // ✅ FIXED CONFIGURATION FOR HEROKU PRODUCTION
-    // PeerJS must connect to the PeerServer at eisc-video-3ee1ac20d78b.herokuapp.com/peerjs
+    // FIX HEROKU: PeerJS configuration for Heroku reverse proxy
     console.log(`  🌐 Connecting to PeerServer: eisc-video-3ee1ac20d78b.herokuapp.com:443 (secure: true)`);
     console.log(`  📍 Path: /peerjs`);
 
@@ -283,6 +282,8 @@ const VideoCall: React.FC = () => {
       path: "/peerjs",
       secure: true,
       debug: 2,
+      
+      // FIX HEROKU: WebRTC configuration for best Heroku compatibility
       config: {
         iceServers: [
           { urls: "stun:stun.l.google.com:19302" },
