@@ -515,9 +515,26 @@ const VideoCall: React.FC = () => {
       "color: purple; font-weight: bold"
     );
     console.log("  Time:", new Date().toISOString());
+    console.log("  Signaling URL:", SIGNALING_URL);
+    
+    // Extract host and port from SIGNALING_URL
+    const url = new URL(SIGNALING_URL);
+    const host = url.hostname;
+    const port = url.port || (url.protocol === "https:" ? 443 : 80);
+    const secure = url.protocol === "https:";
+    
+    console.log("  PeerJS Config:");
+    console.log("    - Host:", host);
+    console.log("    - Port:", port);
+    console.log("    - Path: /peerjs");
+    console.log("    - Secure:", secure);
     console.log("  ICE Servers configured:", 5);
 
     const peer = new Peer({
+      host: host,
+      port: parseInt(port.toString()),
+      path: "/peerjs",
+      secure: secure,
       debug: 2,
       config: {
         iceServers: [
